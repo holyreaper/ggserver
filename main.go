@@ -33,10 +33,9 @@ func main() {
 			fmt.Printf("key %d, value %s", k, v)
 		}
 	}
-	ggserver := service.NewGGService(def.ServerTypeNormal)
-	ggserver.Start()
 	defer func() {
 		println("finish ...")
 	}()
-
+	ggserver := service.NewGGService(def.ServerTypeNormal)
+	ggserver.Start()
 }

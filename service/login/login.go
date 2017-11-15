@@ -12,7 +12,7 @@ func init() {
 type Login struct {
 }
 
-//SayHello hello ...
-func (loginServer *Login) SayHello(context.Context, *loginrpc.HelloRequest) (*loginrpc.HelloReply, error) {
-	return &loginrpc.HelloReply{Message: "helo"}, nil
+//Login hello ...
+func (loginServer *Login) Login(context.Context, *loginrpc.LoginRequest) (*loginrpc.LoginReply, error) {
+	return &loginrpc.LoginReply{Message: "helo"}, nil
 }
