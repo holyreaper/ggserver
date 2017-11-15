@@ -14,7 +14,7 @@
             "host": "127.0.0.1",
             "program": "${fileDirname}",
             "env": {},
-            "args": [],
+            "args": ["-mode=1"],
             "showLog": true
         }
     ]

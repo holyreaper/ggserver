@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package chatrpc;
+
+// The loing service definition.
+service ChatRpc {
+  // Sends a login
+  rpc Chat (ChatMsgRequest) returns (ChatMsgReply) {}
+}
+
+// The request message containing the user's name.
+message ChatMsgRequest {
+  string name = 1;
+  int64 uid  =2;
+  int32 uname = 3;
+}
+
+// The response message containing the greetings
+message ChatMsgReply {
+  int32  result  = 1;
+}

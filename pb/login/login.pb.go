@@ -2,7 +2,7 @@
 // source: login.proto
 
 /*
-Package login is a generated protocol buffer package.
+Package loginrpc is a generated protocol buffer package.
 
 It is generated from these files:
 	login.proto
@@ -11,7 +11,7 @@ It has these top-level messages:
 	HelloRequest
 	HelloReply
 */
-package login
+package loginrpc
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
@@ -68,8 +68,8 @@ func (m *HelloReply) GetMessage() string {
 }
 
 func init() {
-	proto.RegisterType((*HelloRequest)(nil), "login.HelloRequest")
-	proto.RegisterType((*HelloReply)(nil), "login.HelloReply")
+	proto.RegisterType((*HelloRequest)(nil), "loginrpc.HelloRequest")
+	proto.RegisterType((*HelloReply)(nil), "loginrpc.HelloReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -80,66 +80,66 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for Login service
+// Client API for LoginRpc service
 
-type LoginClient interface {
+type LoginRpcClient interface {
 	// Sends a login
 	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
 }
 
-type loginClient struct {
+type loginRpcClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewLoginClient(cc *grpc.ClientConn) LoginClient {
-	return &loginClient{cc}
+func NewLoginRpcClient(cc *grpc.ClientConn) LoginRpcClient {
+	return &loginRpcClient{cc}
 }
 
-func (c *loginClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
+func (c *loginRpcClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
 	out := new(HelloReply)
-	err := grpc.Invoke(ctx, "/login.Login/SayHello", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/loginrpc.LoginRpc/SayHello", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for Login service
+// Server API for LoginRpc service
 
-type LoginServer interface {
+type LoginRpcServer interface {
 	// Sends a login
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
 }
 
-func RegisterLoginServer(s *grpc.Server, srv LoginServer) {
-	s.RegisterService(&_Login_serviceDesc, srv)
+func RegisterLoginRpcServer(s *grpc.Server, srv LoginRpcServer) {
+	s.RegisterService(&_LoginRpc_serviceDesc, srv)
 }
 
-func _Login_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LoginRpc_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HelloRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LoginServer).SayHello(ctx, in)
+		return srv.(LoginRpcServer).SayHello(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/login.Login/SayHello",
+		FullMethod: "/loginrpc.LoginRpc/SayHello",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LoginServer).SayHello(ctx, req.(*HelloRequest))
+		return srv.(LoginRpcServer).SayHello(ctx, req.(*HelloRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Login_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "login.Login",
-	HandlerType: (*LoginServer)(nil),
+var _LoginRpc_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "loginrpc.LoginRpc",
+	HandlerType: (*LoginRpcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SayHello",
-			Handler:    _Login_SayHello_Handler,
+			Handler:    _LoginRpc_SayHello_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -149,14 +149,14 @@ var _Login_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("login.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 134 bytes of a gzipped FileDescriptorProto
+	// 141 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0xc9, 0x4f, 0xcf,
-	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0x94, 0xb8, 0x78, 0x3c,
-	0x52, 0x73, 0x72, 0xf2, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0x84, 0xb8, 0x58, 0xf2,
-	0x12, 0x73, 0x53, 0x25, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xc0, 0x6c, 0x25, 0x35, 0x2e, 0x2e,
-	0xa8, 0x9a, 0x82, 0x9c, 0x4a, 0x21, 0x09, 0x2e, 0xf6, 0xdc, 0xd4, 0xe2, 0xe2, 0xc4, 0x74, 0x98,
-	0x22, 0x18, 0xd7, 0xc8, 0x96, 0x8b, 0xd5, 0x07, 0x64, 0xa8, 0x90, 0x09, 0x17, 0x47, 0x70, 0x62,
-	0x25, 0x58, 0x8f, 0x90, 0xb0, 0x1e, 0xc4, 0x56, 0x64, 0x5b, 0xa4, 0x04, 0x51, 0x05, 0x0b, 0x72,
-	0x2a, 0x95, 0x18, 0x92, 0xd8, 0xc0, 0x0e, 0x33, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x19, 0x3e,
-	0x9a, 0xa4, 0xa7, 0x00, 0x00, 0x00,
+	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x00, 0x73, 0x8a, 0x0a, 0x92, 0x95, 0x94,
+	0xb8, 0x78, 0x3c, 0x52, 0x73, 0x72, 0xf2, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0x84,
+	0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xc0, 0x6c, 0x25,
+	0x35, 0x2e, 0x2e, 0xa8, 0x9a, 0x82, 0x9c, 0x4a, 0x21, 0x09, 0x2e, 0xf6, 0xdc, 0xd4, 0xe2, 0xe2,
+	0xc4, 0x74, 0x98, 0x22, 0x18, 0xd7, 0xc8, 0x8d, 0x8b, 0xc3, 0x07, 0x64, 0x6e, 0x50, 0x41, 0xb2,
+	0x90, 0x15, 0x17, 0x47, 0x70, 0x62, 0x25, 0x58, 0x9b, 0x90, 0x98, 0x1e, 0xcc, 0x3a, 0x3d, 0x64,
+	0xbb, 0xa4, 0x44, 0x30, 0xc4, 0x0b, 0x72, 0x2a, 0x95, 0x18, 0x92, 0xd8, 0xc0, 0x8e, 0x34, 0x06,
+	0x04, 0x00, 0x00, 0xff, 0xff, 0xcb, 0x84, 0x43, 0x4a, 0xb3, 0x00, 0x00, 0x00,
 }
