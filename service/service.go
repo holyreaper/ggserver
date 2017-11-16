@@ -10,6 +10,7 @@ import (
 	"github.com/holyreaper/ggserver/service/login"
 
 	"github.com/holyreaper/ggserver/def"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -36,8 +37,30 @@ func (s *GGService) Start() {
 	}
 	LoginServer := grpc.NewServer()
 	s.RegisterModule(LoginServer)
-	LoginServer.Serve(listen)
+	fmt.Println("server start ...")
+	go LoginServer.Serve(listen)
 
+	//client
+	go Client()
+}
+
+//Client ...
+func Client() {
+	fmt.Println("client start ...")
+	client, err := grpc.Dial("127.0.0.1:8090", grpc.WithInsecure())
+	if err != nil {
+		fmt.Println("client exit error msg ", err)
+		return
+	}
+	defer client.Close()
+	cnn := chatrpc.NewChatRpcClient(client)
+
+	msg, err := cnn.Chat(context.Background(), &chatrpc.ChatMsgRequest{Name: "xiaodian"})
+	if err != nil {
+		fmt.Println("client get msg error ", err)
+	} else {
+		fmt.Println("client get msg :", *msg)
+	}
 }
 
 //RegisterModule 注册服务

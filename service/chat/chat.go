@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"fmt"
+
 	"github.com/holyreaper/ggserver/pb/chat"
 	"golang.org/x/net/context"
 )
@@ -14,6 +16,7 @@ type Chat struct {
 }
 
 //Chat  hello ...
-func (chat *Chat) Chat(context.Context, *chatrpc.ChatMsgRequest) (*chatrpc.ChatMsgReply, error) {
-	return &chatrpc.ChatMsgReply{Result: 1}, nil
+func (chat *Chat) Chat(cont context.Context, chatmsg *chatrpc.ChatMsgRequest) (*chatrpc.ChatMsgReply, error) {
+	fmt.Println("get client msg ", *chatmsg)
+	return &chatrpc.ChatMsgReply{Result: 2}, nil
 }

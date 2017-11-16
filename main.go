@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/holyreaper/ggserver/def"
 	//"context"
 	"fmt"
@@ -19,6 +21,7 @@ const (
 )
 
 var mode = flag.Int("mode", 0, "server mode ")
+var exit = make(chan int)
 
 func init() {
 	flag.Parse()
@@ -36,6 +39,20 @@ func main() {
 	defer func() {
 		println("finish ...")
 	}()
+	fmt.Println("start .service ")
 	ggserver := service.NewGGService(def.ServerTypeNormal)
 	ggserver.Start()
+	go Tick()
+	<-exit
+
+}
+
+//Tick ...
+func Tick() {
+	tick := time.NewTicker(10 * time.Second)
+	for _ = range tick.C {
+		fmt.Println("tick ", tick.C)
+	}
+
+	fmt.Println("tick exit")
 }
