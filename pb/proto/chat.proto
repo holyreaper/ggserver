@@ -6,6 +6,7 @@ package chatrpc;
 service ChatRpc {
   // Sends a login
   rpc Chat (ChatMsgRequest) returns (ChatMsgReply) {}
+  rpc ChatList(stream ChatMsgRequest) returns (stream ChatMsgReply){}
 }
 
 // The request message containing the user's name.

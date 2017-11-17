@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/holyreaper/ggserver/client"
+
 	"github.com/holyreaper/ggserver/def"
 	//"context"
 	"fmt"
@@ -42,6 +44,7 @@ func main() {
 	fmt.Println("start .service ")
 	ggserver := service.NewGGService(def.ServerTypeNormal)
 	ggserver.Start()
+	go client.Start()
 	go Tick()
 	<-exit
 

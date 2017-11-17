@@ -1,8 +1,9 @@
 package login
 
-//import "context"
-import "golang.org/x/net/context"
-import "github.com/holyreaper/ggserver/pb/login"
+import (
+	"github.com/holyreaper/ggserver/pb/login"
+	"golang.org/x/net/context"
+)
 
 func init() {
 	// init
@@ -10,6 +11,7 @@ func init() {
 
 //Login 登录实现
 type Login struct {
+	Srv interface{}
 }
 
 //Login hello ...

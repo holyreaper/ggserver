@@ -13,3 +13,9 @@ const (
 	//ServerTypeProxy 代理服务器
 	ServerTypeProxy
 )
+
+//UID 玩家唯一标识
+type UID int64
+
+// SID 	服务器id
+type SID int
