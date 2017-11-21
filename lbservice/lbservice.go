@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"time"
-
-	"github.com/holyreaper/ggserver/lbmodule/funcall"
 )
 
 //LBService ...
 type LBService struct {
 	waitGroup *sync.WaitGroup
 	exitCh    chan struct{}
-	funcCall  *funcall.FunCall
 	listen    *net.TCPListener
 }
 
@@ -21,14 +17,13 @@ type LBService struct {
 func NewLBService() *LBService {
 	return &LBService{
 		exitCh:    make(chan struct{}),
-		funcCall:  funcall.NewFuncCall(),
 		waitGroup: &sync.WaitGroup{},
 	}
 }
 
 //init 初始化
 func (lb *LBService) init() bool {
-	var err error
+
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", "192.168.1.177:8091")
 	lb.listen, err = net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
@@ -43,13 +38,30 @@ func (lb *LBService) Start() {
 	if !lb.init() {
 		return
 	}
+	defer func() {
+		lb.listen.Close()
+	}()
+
 	for {
-		lb.listen.SetDeadline(time.Now().Add(100))
+
+		select {
+		case <-lb.exitCh:
+			break
+		}
 		cnn, err := lb.listen.Accept()
 		if err != nil {
-
+			continue
+			//if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
 		}
-		cnn.Close()
-	}
 
+	}
+	//cnn.Close()
+
+}
+
+//Stop stop server
+func (lb *LBService) Stop() {
+	close(lb.exitCh)
+	lb.waitGroup.Wait()
+	fmt.Println("lbserver stop ...")
 }

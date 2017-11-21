@@ -19,8 +19,10 @@ type Packet struct {
 }
 
 const (
+	//PKGHeartBeat 心跳
+	PKGHeartBeat = iota + 1
 	//PKGLogin 登录
-	PKGLogin = iota
+	PKGLogin
 	//PKGChat 聊天
 	PKGChat
 )
