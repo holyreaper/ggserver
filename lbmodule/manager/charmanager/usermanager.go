@@ -6,8 +6,7 @@ import (
 
 //UserMng single user mng
 type UserMng struct {
-	IManager
-	uid UID
+	Manager
 }
 
 //Login user

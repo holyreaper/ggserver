@@ -13,7 +13,6 @@ func init() {
 
 //Login Login
 func Login(uid UID) bool {
-
 	charmanager.AddUser(uid)
 	return true
 }

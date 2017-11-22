@@ -59,5 +59,5 @@ func Call(tp uint32, params ...interface{}) (result []reflect.Value, err error) 
 		in[k] = reflect.ValueOf(param)
 	}
 	result = funcall.funcMap[tp].Call(in)
-	return nil, nil
+	return
 }

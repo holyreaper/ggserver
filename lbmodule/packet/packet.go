@@ -27,6 +27,11 @@ const (
 	PKGChat
 )
 
+const (
+	//MAXPACKETLEN 包体最大长度
+	MAXPACKETLEN = 4096 + 8
+)
+
 //Pack 打包
 func (pk *Packet) Pack(tp uint32, data interface{}) error {
 

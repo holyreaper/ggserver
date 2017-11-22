@@ -6,8 +6,7 @@ import (
 
 //ChatMng single chat mng
 type ChatMng struct {
-	IManager
-	uid UID
+	Manager
 }
 
 //Login user

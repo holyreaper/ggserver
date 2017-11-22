@@ -1,6 +1,9 @@
 package charmanager
 
 import (
+	"errors"
+	"net"
+	"time"
 
 	//def
 	"sync"
@@ -8,15 +11,35 @@ import (
 	. "github.com/holyreaper/ggserver/def"
 )
 
-//IManager manager interface
-type IManager interface {
-	Login(UID) bool
-	LogOut(UID) bool
+//Manager manager interface
+type Manager struct {
+	cnn           *net.TCPConn
+	keepaliveTime time.Time
+	uid           UID
+}
+
+//Login .
+func (*Manager) Login(UID) bool {
+	return false
+}
+
+//LogOut .
+func (*Manager) LogOut(UID) bool {
+	return false
+}
+
+//SendMessage ..
+func (mng *Manager) SendMessage(data []byte) (err error) {
+	mng.cnn.SetWriteDeadline(time.Now().Add(time.Duration(1000)))
+	if mng.cnn == nil {
+		err = errors.New(" user does not cnn")
+	}
+	return
 }
 
 var (
 	charMng = &CharManager{
-		manager: make(map[UID]map[int32]IManager),
+		manager: make(map[UID]map[int32]*Manager),
 		wrLock:  sync.RWMutex{},
 	}
 )
@@ -30,7 +53,7 @@ const (
 
 //CharManager user  manager
 type CharManager struct {
-	manager map[UID]map[int32]IManager
+	manager map[UID]map[int32]*Manager
 	wrLock  sync.RWMutex
 }
 
@@ -98,6 +121,13 @@ func DeleteAll() bool {
 //GetUser get user info
 func GetUser(uid UID) interface{} {
 	return charMng.GetUser(uid)
+}
+
+//Login user login
+func Login(uid UID) interface{} {
+	//各种login
+
+	return nil
 }
 
 //各种manager接口的定义
