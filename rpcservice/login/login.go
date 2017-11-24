@@ -1,7 +1,7 @@
 package login
 
 import (
-	"github.com/holyreaper/ggserver/pb/login"
+	"github.com/holyreaper/ggserver/rpcservice/pb/login"
 	"golang.org/x/net/context"
 )
 

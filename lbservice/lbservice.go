@@ -1,37 +1,29 @@
 package lbservice
 
 import (
-	"net"
 	"fmt"
-	"sync"
+
 	"github.com/holyreaper/ggserver/lbmodule/net"
 )
 
 //LBService ...
 type LBService struct {
-	exitCh    chan struct{}
-	lbnet     *lbnet.LBNet
+	exitCh chan struct{}
+	lbnet  *lbnet.LBNet
 }
 
 //NewLBService new
 func NewLBService() *LBService {
 	return &LBService{
-		exitCh:    make(chan struct{}),
-		lbnet :&lbnet.LBNet{
-			exitCh: make(chan struct{})
-			listen: &net.TCPListener{}
-			waitGroup: &sync.WaitGroup{},
-			readTimeOut :  time.Duration(30),
-			writeTimeOut:  time.Duration(30),
-
-		}
+		exitCh: make(chan struct{}),
+		lbnet:  lbnet.NewLBNet(),
 	}
 }
 
 //init 初始化
 func (lb *LBService) init() bool {
-	bindip := "192.168.1.177:8091"
-	lb.lbnet.Init("ipv4", "tcp", bindip)
+	bindip := "127.0.0.1:8091"
+	lb.lbnet.Init("tcp", "tcp", bindip)
 	return true
 }
 
@@ -50,6 +42,6 @@ func (lb *LBService) Start() {
 //Stop stop server
 func (lb *LBService) Stop() {
 	close(lb.exitCh)
-	lb.lbnet.Stop();
+	lb.lbnet.Stop()
 	fmt.Println("lbserver stop ...")
 }

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package ptuser;
+
+// The request message containing the user's name.
+message LoginMsgRequest {
+  int64 uid  =1;
+}
+
+// The response message containing the greetings
+message LoginMsgReply {
+  int32  result  = 1;
+}

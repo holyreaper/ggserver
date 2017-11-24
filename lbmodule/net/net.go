@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
+	_ "github.com/holyreaper/ggserver/lbmodule/logic/chat"
+	_ "github.com/holyreaper/ggserver/lbmodule/logic/user"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
 	"github.com/holyreaper/ggserver/util/convert"
 )
@@ -22,22 +24,44 @@ type LBNet struct {
 	writeTimeOut time.Duration
 }
 
+//NewLBNet new lbnet
+func NewLBNet() *LBNet {
+	return &LBNet{
+		exitCh:       make(chan struct{}),
+		listen:       &net.TCPListener{},
+		waitGroup:    &sync.WaitGroup{},
+		readTimeOut:  time.Duration(30),
+		writeTimeOut: time.Duration(30),
+	}
+}
+
 // Start deal cnn
 func (lbnet *LBNet) Start() {
+	fmt.Println("lbnet start ...")
+	defer func() {
 
+		if err := recover(); err != nil {
+			fmt.Println("lbnet  have panic ", err)
+		}
+		fmt.Println("lbnet end ...")
+	}()
 	for {
 
 		select {
 		case <-lbnet.exitCh:
 			break
+		default:
 		}
 		cnn, err := lbnet.listen.AcceptTCP()
 		if err != nil {
+			fmt.Println("have an invalide connect ", err)
 			continue
 			//if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
 		}
+		fmt.Println("have a Cnn accept start to serve her ")
 		go lbnet.HandleCnn(cnn)
 	}
+
 }
 
 // Stop deal cnn
@@ -53,7 +77,7 @@ func (lbnet *LBNet) Init(netproto string /*proto4 */, nettype string /*tcp*/, ip
 		fmt.Println("err")
 		os.Exit(-1)
 	}
-	lbnet.listen, err = net.ListenTCP(netproto, tcpAddr)
+	lbnet.listen, err = net.ListenTCP(nettype, tcpAddr)
 	if err != nil {
 		fmt.Println("LbServer Listen error ", err)
 		os.Exit(-2)
@@ -82,6 +106,8 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		pType   = make([]byte, 4)
 		pPacLen uint32
 	)
+	go lbnet.HandlePacket(cnn, recvPacket)
+	fmt.Println("start serve the new client  ", cnn.RemoteAddr().String())
 	for {
 		select {
 		case <-lbnet.exitCh:
@@ -89,11 +115,11 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 			return
 		default:
 		}
-		cnn.SetReadDeadline(time.Now().Add(lbnet.readTimeOut))
+		cnn.SetReadDeadline(time.Now().Add(10000000))
 
 		if n, err := io.ReadFull(cnn, pLen); err != nil && n != 4 {
 			fmt.Printf("Read pLen failed: %v\r\n", err)
-			return
+			continue
 		}
 		if n, err := io.ReadFull(cnn, pType); err != nil && n != 4 {
 			fmt.Printf("Read pType failed: %v\r\n", err)
@@ -103,12 +129,14 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 			fmt.Printf("pacLen larger than pPacLen\r\n")
 			return
 		}
-
+		fmt.Println("need alloc bytes ", pPacLen)
+		//return
 		pacData := make([]byte, pPacLen-8)
 		if n, err := io.ReadFull(cnn, pacData); err != nil && n != int(pPacLen) {
 			fmt.Printf("Read pacData failed: %v\r\n", err)
 			return
 		}
+		fmt.Println("HandleCnn get full packet data   ...")
 		recvPacket <- &packet.Packet{
 			Len:  pPacLen,
 			Type: uint32(convert.BytesToInt32(pType)),
@@ -124,7 +152,7 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, pack <-chan *packet.Packet) {
 			fmt.Printf("handle packet panic error %v \r\n", err)
 		}
 	}()
-
+	fmt.Println("HandlePacket ing ...")
 	for {
 		select {
 		case <-lbnet.exitCh:
@@ -132,15 +160,15 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, pack <-chan *packet.Packet) {
 			return
 		case p := <-pack:
 			{
-				ret, err := funcall.Call(p.Type, p.Data)
+				var err error
+				if p.Type == packet.PKGLogin {
+					_, err = funcall.Call(p.Type, cnn, p.Data)
+				} else {
+					_, err = funcall.Call(p.Type, p.Data)
+				}
 				if err != nil {
 					fmt.Printf("func call type  %d error %s \r\n", p.Type, err)
 					continue
-				}
-				//deal with return value
-				for _, value := range ret {
-					fmt.Println(value.Bytes())
-					//todo send return value to client
 				}
 			}
 		}

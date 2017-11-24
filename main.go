@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/holyreaper/ggserver/client"
+	"github.com/holyreaper/ggserver/lbservice"
 
 	"github.com/holyreaper/ggserver/def"
-	//"context"
+
 	"fmt"
 
 	"runtime"
 
 	"github.com/holyreaper/ggserver/conf"
-	"github.com/holyreaper/ggserver/service"
+	"github.com/holyreaper/ggserver/rpcservice"
 
 	"flag"
 )
@@ -42,8 +43,10 @@ func main() {
 		println("finish ...")
 	}()
 	fmt.Println("start .service ")
-	ggserver := service.NewGGService(def.ServerTypeNormal)
+	ggserver := rpcservice.NewGGService(def.ServerTypeNormal)
 	ggserver.Start()
+	lbserver := lbservice.NewLBService()
+	go lbserver.Start()
 	go client.Start()
 	go Tick()
 	<-exit

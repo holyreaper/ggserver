@@ -2,6 +2,7 @@ package charmanager
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"time"
 
@@ -11,11 +12,16 @@ import (
 	. "github.com/holyreaper/ggserver/def"
 )
 
+const (
+	//UserMngEnum ...
+	UserMngEnum = iota
+	//ChatMngENum  ...
+	ChatMngENum
+)
+
 //Manager manager interface
 type Manager struct {
-	cnn           *net.TCPConn
-	keepaliveTime time.Time
-	uid           UID
+	uid UID
 }
 
 //Login .
@@ -28,37 +34,21 @@ func (*Manager) LogOut(UID) bool {
 	return false
 }
 
-//SendMessage ..
-func (mng *Manager) SendMessage(data []byte) (err error) {
-	mng.cnn.SetWriteDeadline(time.Now().Add(time.Duration(1000)))
-	if mng.cnn == nil {
-		err = errors.New(" user does not cnn")
-	}
-	return
-}
-
 var (
-	charMng = &CharManager{
+	onlineMng = &OnLineMng{
 		manager: make(map[UID]map[int32]*Manager),
 		wrLock:  sync.RWMutex{},
 	}
 )
 
-const (
-	//UserMngEnum ...
-	UserMngEnum = iota
-	//ChatMngENum  ...
-	ChatMngENum
-)
-
-//CharManager user  manager
-type CharManager struct {
+//OnLineMng user  manager
+type OnLineMng struct {
 	manager map[UID]map[int32]*Manager
 	wrLock  sync.RWMutex
 }
 
 //AddUser 增加user
-func (cm *CharManager) AddUser(uid UID) bool {
+func (cm *OnLineMng) AddUser(uid UID) bool {
 	cm.wrLock.Lock()
 	defer cm.wrLock.Unlock()
 	if _, ok := cm.manager[uid]; ok {
@@ -69,7 +59,7 @@ func (cm *CharManager) AddUser(uid UID) bool {
 }
 
 //DelUser ...
-func (cm *CharManager) DelUser(uid UID) bool {
+func (cm *OnLineMng) DelUser(uid UID) bool {
 	cm.wrLock.Lock()
 	defer cm.wrLock.Unlock()
 	if _, ok := cm.manager[uid]; !ok {
@@ -81,7 +71,7 @@ func (cm *CharManager) DelUser(uid UID) bool {
 }
 
 //DeleteAll delete all
-func (cm *CharManager) DeleteAll() bool {
+func (cm *OnLineMng) DeleteAll() bool {
 	cm.wrLock.Lock()
 	defer cm.wrLock.Unlock()
 	for k, _ := range cm.manager {
@@ -92,8 +82,20 @@ func (cm *CharManager) DeleteAll() bool {
 	return true
 }
 
+//SendMessageToUser SendMessageToUser
+func (cm *OnLineMng) SendMessageToUser(uid UID, data []byte) (err error) {
+	mng := cm.GetUser(uid)
+	if mng != nil {
+		charmng := mng.(*CharManager)
+		err = charmng.SendMessage(data)
+		return
+	}
+	err = errors.New("user not online ")
+	return
+}
+
 //GetUser get user
-func (cm *CharManager) GetUser(uid UID) interface{} {
+func (cm *OnLineMng) GetUser(uid UID) interface{} {
 	cm.wrLock.RLock()
 	defer cm.wrLock.RUnlock()
 	if value, ok := cm.manager[uid]; ok {
@@ -105,29 +107,68 @@ func (cm *CharManager) GetUser(uid UID) interface{} {
 
 //AddUser add user
 func AddUser(uid UID) bool {
-	return charMng.AddUser(uid)
+	return onlineMng.AddUser(uid)
 }
 
 //DelUser delete user
 func DelUser(uid UID) bool {
-	return charMng.DelUser(uid)
+	return onlineMng.DelUser(uid)
 }
 
 //DeleteAll delete all  user
 func DeleteAll() bool {
-	return charMng.DeleteAll()
+	return onlineMng.DeleteAll()
 }
 
 //GetUser get user info
 func GetUser(uid UID) interface{} {
-	return charMng.GetUser(uid)
+	return onlineMng.GetUser(uid)
 }
 
 //Login user login
-func Login(uid UID) interface{} {
+func Login(cnn *net.TCPConn, uid UID) interface{} {
 	//各种login
 
 	return nil
 }
 
-//各种manager接口的定义
+//SendMessageToUser SendMessageToUser
+func SendMessageToUser(uid UID, data []byte) (err error) {
+	err = onlineMng.SendMessageToUser(uid, data)
+	return
+}
+
+//玩家具体管理类的定义
+//CharManager
+type CharManager struct {
+	Manager
+	cnn       *net.TCPConn
+	keepAlive time.Duration
+	//userMng
+	userMng *Manager
+	chatMng *Manager
+}
+
+//Login .
+func (cm *CharManager) Login(uid UID) bool {
+	cm.userMng.Login(uid)
+	cm.chatMng.Login(uid)
+	return false
+}
+
+//LogOut .
+func (cm *CharManager) LogOut(uid UID) bool {
+	cm.userMng.LogOut(uid)
+	cm.chatMng.LogOut(uid)
+	return false
+}
+
+//SendMessage ..
+func (cm *CharManager) SendMessage(data []byte) (err error) {
+	cm.cnn.SetWriteDeadline(time.Now().Add(time.Duration(1000)))
+	ln, err := cm.cnn.Write(data)
+	if err != nil || ln != len(data) {
+		fmt.Println("send byte to client  err ", err)
+	}
+	return
+}

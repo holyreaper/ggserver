@@ -5,12 +5,13 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/holyreaper/ggserver/pb/chat"
+	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
 	"golang.org/x/net/context"
 )
 
 func init() {
 	// init
+	fmt.Println("sdfsdafasd")
 }
 
 //Chat 登录实现

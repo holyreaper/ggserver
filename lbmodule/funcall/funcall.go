@@ -2,6 +2,7 @@ package funcall
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 )
@@ -47,13 +48,15 @@ func BindFunc(tp uint32, fc interface{}) (err error) {
 func Call(tp uint32, params ...interface{}) (result []reflect.Value, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			err = errors.New(strconv.Itoa(int(tp)) + " is not callable.")
+			//err = errors.New(strconv.Itoa(int(tp)) + " is not callable.")
+			fmt.Println("funccall err ", e)
 		}
 	}()
 	if _, ok := funcall.funcMap[tp]; !ok {
 		err = errors.New(strconv.Itoa(int(tp)) + " does not exist.")
 		return
 	}
+
 	in := make([]reflect.Value, len(params))
 	for k, param := range params {
 		in[k] = reflect.ValueOf(param)

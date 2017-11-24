@@ -1,13 +1,13 @@
-package service
+package rpcservice
 
 import (
 	"fmt"
 	"net"
 
-	"github.com/holyreaper/ggserver/pb/chat"
-	"github.com/holyreaper/ggserver/pb/login"
-	"github.com/holyreaper/ggserver/service/chat"
-	"github.com/holyreaper/ggserver/service/login"
+	"github.com/holyreaper/ggserver/rpcservice/chat"
+	"github.com/holyreaper/ggserver/rpcservice/login"
+	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
+	"github.com/holyreaper/ggserver/rpcservice/pb/login"
 
 	"github.com/holyreaper/ggserver/def"
 	"google.golang.org/grpc"

@@ -1,8 +1,12 @@
 package chat
 
 import (
+	"fmt"
+
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
-	. "github.com/holyreaper/ggserver/lbmodule/package"
+	. "github.com/holyreaper/ggserver/lbmodule/packet"
+
+	"github.com/holyreaper/ggserver/lbmodule/pb/chat"
 )
 
 func init() {
@@ -10,6 +14,9 @@ func init() {
 }
 
 //Chat chat
-func Chat(uid uint32) bool {
-	return true
+func Chat(req ptchat.ChatMsgRequest) (rsp ptchat.ChatMsgReply) {
+
+	fmt.Printf("user %d send to user %d message %s", req.Fuid, req.Tuid, req.Msg)
+	rsp.Result = 1
+	return
 }
