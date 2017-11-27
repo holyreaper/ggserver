@@ -28,7 +28,8 @@ func Login(cnn *net.TCPConn, reqData []byte) (rsp ptuser.LoginMsgReply) {
 	}
 
 	fmt.Printf("user %d Login success !!", req.Uid)
-	charmanager.AddUser(UID(req.GetUid()))
-	rsp.Result = 189
+	//charmanager.AddUser(UID(req.GetUid()))
+	charmanager.Login(cnn, UID(req.GetUid()))
+	//rsp.Result = 189
 	return
 }

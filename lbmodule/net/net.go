@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
 	_ "github.com/holyreaper/ggserver/lbmodule/logic/chat"
 	_ "github.com/holyreaper/ggserver/lbmodule/logic/user"
@@ -105,6 +106,12 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		pLen    = make([]byte, 4)
 		pType   = make([]byte, 4)
 		pPacLen uint32
+		pacData = make([]byte, packet.MAXPACKETLEN)
+
+		cLen           = 0 //curr read pLen
+		cType          = 0 //curr read pType
+		cPacLen uint32 = 0 //curr read pPackLen
+
 	)
 	go lbnet.HandlePacket(cnn, recvPacket)
 	fmt.Println("start serve the new client  ", cnn.RemoteAddr().String())
@@ -115,33 +122,58 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 			return
 		default:
 		}
-		cnn.SetReadDeadline(time.Now().Add(10000000))
+		cnn.SetReadDeadline(time.Now().Add(10e9))
+		if cLen < 4 {
+			if n, err := io.ReadFull(cnn, pLen[cLen:]); err != nil && n != 4 {
+				if def.IsTimeOut(err) {
+					cLen += n
+					fmt.Printf("Read pLen time out  \r\n")
+					continue
+				}
+				fmt.Printf("Read pLen failed: %v\r\n", err)
+				return //exit
+			}
 
-		if n, err := io.ReadFull(cnn, pLen); err != nil && n != 4 {
-			fmt.Printf("Read pLen failed: %v\r\n", err)
-			continue
+			cLen += 4
+			if pPacLen = uint32(convert.BytesToInt32(pLen)); pPacLen > packet.MAXPACKETLEN {
+				fmt.Printf("pacLen larger than pPacLen\r\n")
+				return
+			}
 		}
-		if n, err := io.ReadFull(cnn, pType); err != nil && n != 4 {
-			fmt.Printf("Read pType failed: %v\r\n", err)
-			return
+		if cType < 4 {
+			if n, err := io.ReadFull(cnn, pType); err != nil && n != 4 {
+				if def.IsTimeOut(err) {
+					cType += n
+					fmt.Printf("Read pType time out  \r\n")
+					continue
+				}
+				fmt.Printf("Read pType failed: %v\r\n", err)
+				return
+			}
+			cType += 4
 		}
-		if pPacLen = uint32(convert.BytesToInt32(pLen)); pPacLen > packet.MAXPACKETLEN {
-			fmt.Printf("pacLen larger than pPacLen\r\n")
-			return
+		if cPacLen < pPacLen {
+			if n, err := io.ReadFull(cnn, pacData[cPacLen:pPacLen-8]); err != nil && n != int(pPacLen-8-cPacLen) {
+				if def.IsTimeOut(err) {
+					cPacLen += uint32(n)
+					fmt.Printf("Read pacData time out  \r\n")
+					continue
+				}
+				fmt.Printf("Read pacData failed: %v\r\n", err)
+				return
+			}
+			cPacLen += pPacLen
 		}
-		fmt.Println("need alloc bytes ", pPacLen)
-		//return
-		pacData := make([]byte, pPacLen-8)
-		if n, err := io.ReadFull(cnn, pacData); err != nil && n != int(pPacLen) {
-			fmt.Printf("Read pacData failed: %v\r\n", err)
-			return
-		}
+
 		fmt.Println("HandleCnn get full packet data   ...")
 		recvPacket <- &packet.Packet{
 			Len:  pPacLen,
 			Type: uint32(convert.BytesToInt32(pType)),
-			Data: pacData,
+			Data: pacData[:pPacLen-8],
 		}
+		cLen = 0
+		cType = 0
+		cPacLen = 0
 	}
 }
 

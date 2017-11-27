@@ -1,5 +1,7 @@
 package def
 
+import "net"
+
 // ServerType 服务器类型
 type ServerType int
 
@@ -19,3 +21,11 @@ type UID int64
 
 // SID 	服务器id
 type SID int
+
+//IsTimeOut check net err
+func IsTimeOut(err error) bool {
+	if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
+		return true
+	}
+	return false
+}

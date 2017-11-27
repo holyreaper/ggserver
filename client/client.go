@@ -133,13 +133,14 @@ func UserClient(ex <-chan bool) {
 	fmt.Println("client read type succ ... !")
 	ulen := convert.BytesToInt32(bLen)
 
-	bData := make([]byte, ulen)
+	bData := make([]byte, ulen-8)
 	ln, err = io.ReadFull(cnn, bData)
-	if err != nil || ln != int(ulen) {
+	if err != nil || ln != int(ulen-8) {
 		fmt.Println("read bData  fail !")
 		return
 	}
-	if convert.BytesToInt32(bType) == packet.PKGLogin {
+	mtp := convert.BytesToInt32(bType)
+	if mtp == packet.PKGLogin {
 		rsp := ptuser.LoginMsgReply{}
 		err := proto.Unmarshal(bData, &rsp)
 		if err != nil {
@@ -150,7 +151,8 @@ func UserClient(ex <-chan bool) {
 	} else {
 		fmt.Println("unknown message type ")
 	}
-	cnn.Close()
+
 	<-ex
+	cnn.Close()
 	return
 }
