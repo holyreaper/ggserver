@@ -10,6 +10,7 @@ import (
 	"github.com/holyreaper/ggserver/util/convert"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/holyreaper/ggserver/database/mysql"
 	"github.com/holyreaper/ggserver/lbmodule/pb/user"
 	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
 	"golang.org/x/net/context"
@@ -155,4 +156,10 @@ func UserClient(ex <-chan bool) {
 	<-ex
 	cnn.Close()
 	return
+}
+
+//TestSql ..
+func TestSql() {
+	command := mysql.Command{}
+	command.Select("t_user").Where("uid = ?")
 }
