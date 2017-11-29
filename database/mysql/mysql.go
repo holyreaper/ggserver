@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,18 +18,30 @@ func init() {
 }
 
 //Query ...
-func Query(req string, params ...interface{}) (ret map[int32]map[string]interface{}) {
-	rows, err := db.Query(req, params)
+func Query(req string, params ...interface{}) (ret map[int32]map[string]interface{}, err error) {
+	stmt, err := db.Prepare(req)
 	if err != nil {
 		fmt.Println("mysql query fail ", err)
 		return
 	}
-	return FetchResult(rows)
+
+	rows, err := stmt.Query(params...)
+	stmt.Close()
+	rows.Close()
+	return FetchResult(rows), err
 }
 
 //Exec ...
-func Exec(req string) bool {
-	return true
+func Exec(req string, params ...interface{}) (sql.Result, error) {
+	stmt, err := db.Prepare(req)
+	if err != nil {
+		fmt.Println("mysql query fail ", err)
+		return nil, errors.New("params is nil")
+	}
+
+	result, err := stmt.Exec(params...)
+	stmt.Close()
+	return result, err
 }
 
 //FetchResult ...
@@ -36,21 +49,23 @@ func FetchResult(rows *sql.Rows) (ret map[int32]map[string]interface{}) {
 	columns, _ := rows.Columns()
 	args := make([]interface{}, len(columns))
 	values := make([]interface{}, len(columns))
-
+	ret = make(map[int32]map[string]interface{})
 	for i := range values {
 		args[i] = &values[i]
 	}
 	var k int32
 	k = 0
 	for rows.Next() {
-		err := rows.Scan(args)
+		columnMap := make(map[string]interface{})
+		err := rows.Scan(args...)
 		if err != nil {
 			fmt.Println("mysql FetchResult err  ", err)
 			return
 		}
 		for i, v := range values {
-			ret[k][columns[i]] = v
+			columnMap[columns[i]] = v
 		}
+		ret[k] = columnMap
 		k++
 	}
 	return

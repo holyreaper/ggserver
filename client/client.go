@@ -5,12 +5,12 @@ import (
 	"io"
 	"net"
 
+	"github.com/holyreaper/ggserver/database/mysql"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
 
 	"github.com/holyreaper/ggserver/util/convert"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/holyreaper/ggserver/database/mysql"
 	"github.com/holyreaper/ggserver/lbmodule/pb/user"
 	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
 	"golang.org/x/net/context"
@@ -18,7 +18,6 @@ import (
 )
 
 func init() {
-
 }
 
 //Start client
@@ -29,6 +28,7 @@ func Start() {
 		fmt.Println("client exit error msg ", err)
 		return
 	}
+	TestSQL()
 
 	defer func() {
 		client.Close()
@@ -158,8 +158,71 @@ func UserClient(ex <-chan bool) {
 	return
 }
 
-//TestSql ..
-func TestSql() {
+//TestSQL ..
+func TestSQL() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("testsql panic ", err)
+		}
+	}()
+	//select
+	bb := []string{"uid", "name", "level"}
 	command := mysql.Command{}
-	command.Select("t_user").Where("uid = ?")
+	for i := 1; i < 100; i++ {
+		command.Clear()
+		command.Select("t_user", bb).Where("uid")
+		result, _ := command.Query("21001")
+		for _, v := range result {
+			fmt.Println("get result :")
+			for m, n := range v {
+				fmt.Printf("key:%v,value:%v", m, n)
+			}
+		}
+	}
+
+	/*
+			bb := []string{"uid", "name", "level"}
+		command := Command{}
+		command.Select("t_user", bb).Where("uid")
+		for i := 1; i < b.N; i++ {
+			//fmt.Println("helo....", b.N)
+			command.Query("21001")
+
+			fmt.Println("return ....", b.N)
+		}
+						//select
+						bb := []string{"uid", "name", "level"}
+						command := mysql.Command{}
+						command.Select("t_user", bb).Where("uid")
+						result := command.Query("21001")
+						for _, v := range result {
+							fmt.Println("get result :")
+							for m, n := range v {
+								fmt.Printf("key:%v,value:%v", m, n)
+							}
+						}
+							//update
+			updateField := []string{"data"}
+			updateCommand := mysql.Command{}
+			updateCommand.Update("t_user").Set(updateField).Where("uid")
+			_, err := updateCommand.Exec(123, 21001)
+
+			if err != nil {
+				fmt.Println("updateCommand fail", err)
+			} else {
+				fmt.Println("effect rows")
+			}
+
+
+							//insert
+					insertField := []string{"uid", "name", "level"}
+					insertCommand := mysql.Command{}
+					insertCommand.InsertInto("t_user").Set(insertField)
+					insertCommand.Exec(21002, "reaper", 1)
+						//insert
+				deleteCommand := mysql.Command{}
+				deleteCommand.Delete("t_user").Where("uid")
+				deleteCommand.Exec(21002)
+	*/
+
 }
