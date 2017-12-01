@@ -12,7 +12,6 @@ func Benchmark_Select(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		//fmt.Println("helo....", b.N)
 		command.Query("21002")
-
 		//fmt.Println("return ....", b.N)
 	}
 }

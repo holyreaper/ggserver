@@ -24,10 +24,11 @@ func Query(req string, params ...interface{}) (ret map[int32]map[string]interfac
 		fmt.Println("mysql query fail ", err)
 		return
 	}
-
 	rows, err := stmt.Query(params...)
+	if err != nil {
+		return
+	}
 	stmt.Close()
-	rows.Close()
 	return FetchResult(rows), err
 }
 
@@ -40,6 +41,9 @@ func Exec(req string, params ...interface{}) (sql.Result, error) {
 	}
 
 	result, err := stmt.Exec(params...)
+	if err != nil {
+		return nil, err
+	}
 	stmt.Close()
 	return result, err
 }
@@ -68,5 +72,13 @@ func FetchResult(rows *sql.Rows) (ret map[int32]map[string]interface{}) {
 		ret[k] = columnMap
 		k++
 	}
+	//rows.Close()
 	return
+}
+
+//Close ...
+func Close() {
+	if db != nil {
+		db.Close()
+	}
 }
