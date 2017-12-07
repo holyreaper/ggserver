@@ -68,7 +68,7 @@ func Start() {
 			fmt.Println("call chatlist recv error ", err)
 			return
 		}
-		fmt.Println("recv msg result :", msg.Result)
+		fmt.Println("recv stream msg result :", msg.Result)
 	}
 
 }

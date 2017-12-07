@@ -29,9 +29,13 @@ func (chat *Chat) Chat(cont context.Context, chatmsg *chatrpc.ChatMsgRequest) (*
 func (chat *Chat) ChatList(chatstream chatrpc.ChatRpc_ChatListServer) error {
 
 	fmt.Println("current goroutin num :", runtime.NumGoroutine())
+	rsp := chatrpc.ChatMsgReply{Result: 1}
 	for {
 
-		//err := chatstream.Send(&reply)
+		err := chatstream.Send(&rsp)
+		if err != nil {
+			fmt.Println("send stream fail ")
+		}
 		time.Sleep(time.Second * 10)
 	}
 }
