@@ -5,7 +5,7 @@ import (
 
 	. "github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
-	"github.com/holyreaper/ggserver/lbmodule/pb/user"
+	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 )
 
 //UserMng single user mng
@@ -18,7 +18,7 @@ type UserMng struct {
 func (cm *UserMng) Login(uid UID) bool {
 	cm.uid = uid
 	// load data from d
-	data := ptuser.LoginMsgReply{
+	data := message.LoginMsgReply{
 		Result: 1314,
 	}
 	fmt.Println("userManager send packet to client ")

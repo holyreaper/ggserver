@@ -10,7 +10,7 @@ import (
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
 	"github.com/holyreaper/ggserver/lbmodule/manager/charmanager"
 	. "github.com/holyreaper/ggserver/lbmodule/packet"
-	"github.com/holyreaper/ggserver/lbmodule/pb/user"
+	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 )
 
 func init() {
@@ -19,9 +19,9 @@ func init() {
 }
 
 //Login Login
-func Login(cnn *net.TCPConn, reqData []byte) (rsp ptuser.LoginMsgReply) {
+func Login(cnn *net.TCPConn, reqData []byte) (rsp message.LoginMsgReply) {
 	//user login ...
-	var req ptuser.LoginMsgRequest
+	var req message.LoginMsgRequest
 	if err := proto.Unmarshal(reqData, &req); err != nil {
 		rsp.Result = -1
 		return

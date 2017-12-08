@@ -59,6 +59,5 @@ func Tick() {
 	for _ = range tick.C {
 		fmt.Println("tick ", tick.C)
 	}
-
 	fmt.Println("tick exit")
 }

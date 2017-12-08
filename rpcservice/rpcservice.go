@@ -50,7 +50,7 @@ func (s *GGService) RegisterModule(rpcServer *grpc.Server) {
 	} else if s.st == def.ServerTypeDB {
 
 	} else {
-
+		
 	}
 
 }

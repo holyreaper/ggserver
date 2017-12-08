@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+//client <-> lbserver proto
+package message;
+import "chat.proto";
+import "user.proto";
+message Message{
+    int32           command   =   1;
+
+    ChatMsgRequest chatRequest  = 2;
+    
+    ChatMsgReply    chatReply  = 3;
+    
+    LoginMsgRequest loginRequest = 4;
+    
+    LoginMsgReply   loginReply  = 5;
+
+}

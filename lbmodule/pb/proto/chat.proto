@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ptchat;
+package message;
 
 // The request message containing the user's name.
 message ChatMsgRequest {

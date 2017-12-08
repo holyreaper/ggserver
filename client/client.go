@@ -11,7 +11,7 @@ import (
 	"github.com/holyreaper/ggserver/util/convert"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/holyreaper/ggserver/lbmodule/pb/user"
+	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -96,7 +96,7 @@ func UserClient(ex <-chan bool) {
 	}
 	fmt.Println("client cnn server succ !")
 	//send data
-	req := ptuser.LoginMsgRequest{Uid: 1001}
+	req := message.Message{LoginRequest: &message.LoginMsgRequest{Uid: 1}}
 	data, err := proto.Marshal(&req)
 	if err != nil {
 		fmt.Println("mashal login request fail !")
@@ -142,7 +142,7 @@ func UserClient(ex <-chan bool) {
 	}
 	mtp := convert.BytesToInt32(bType)
 	if mtp == packet.PKGLogin {
-		rsp := ptuser.LoginMsgReply{}
+		rsp := message.LoginMsgReply{}
 		err := proto.Unmarshal(bData, &rsp)
 		if err != nil {
 			fmt.Println("unmashal data fail ")

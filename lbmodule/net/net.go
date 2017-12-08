@@ -13,6 +13,7 @@ import (
 	_ "github.com/holyreaper/ggserver/lbmodule/logic/chat"
 	_ "github.com/holyreaper/ggserver/lbmodule/logic/user"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
+	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 	"github.com/holyreaper/ggserver/util/convert"
 )
 
@@ -194,7 +195,13 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, pack <-chan *packet.Packet) {
 			{
 				var err error
 				if p.Type == packet.PKGLogin {
-					_, err = funcall.Call(p.Type, cnn, p.Data)
+					ret, _ := funcall.Call(p.Type, cnn, p.Data)
+					for _, value := range ret {
+						itf := value.Interface()
+						pm := itf.(message.LoginMsgReply)
+						fmt.Printf("%v", pm.String())
+					}
+
 				} else {
 					_, err = funcall.Call(p.Type, p.Data)
 				}
