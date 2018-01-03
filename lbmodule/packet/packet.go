@@ -13,8 +13,8 @@ import (
 * len |type|packet
  */
 type Packet struct {
-	Len  uint32
-	Type uint32
+	Len  int32
+	Type int32
 	Data []byte
 }
 
@@ -33,22 +33,22 @@ const (
 )
 
 //Pack 打包
-func (pk *Packet) Pack(tp uint32, data interface{}) error {
+func (pk *Packet) Pack(tp int32, data proto.Message) error {
 
-	dt, err := proto.Marshal(data.(proto.Message))
+	dt, err := proto.Marshal(data)
 	if err != nil {
 		fmt.Println("packet message error ", err)
 		return err
 	}
-	pk.Len = uint32(8 + len(dt))
+	pk.Len = 8 + int32(len(dt))
 	pk.Type = tp
+	pk.Data = dt
 	return err
 }
 
 //UnPack 解析
-func (pk *Packet) UnPack() (pb interface{}, err error) {
-
-	err = proto.Unmarshal(pk.Data, pb.(proto.Message))
+func (pk *Packet) UnPack() (pb proto.Message, err error) {
+	err = proto.Unmarshal(pk.Data, pb)
 	if err != nil {
 		fmt.Println("packet message error ", err)
 		return
@@ -65,6 +65,6 @@ func (pk *Packet) FormatBuf() (buf []byte) {
 }
 
 //GetType 获取类型
-func (pk *Packet) GetType() uint32 {
+func (pk *Packet) GetType() int32 {
 	return pk.Type
 }

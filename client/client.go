@@ -96,7 +96,7 @@ func UserClient(ex <-chan bool) {
 	}
 	fmt.Println("client cnn server succ !")
 	//send data
-	req := message.Message{LoginRequest: &message.LoginMsgRequest{Uid: 1}}
+	req := message.Message{LoginRequest: &message.LoginMsgRequest{Uid: 11020}, Command: packet.PKGLogin}
 	data, err := proto.Marshal(&req)
 	if err != nil {
 		fmt.Println("mashal login request fail !")

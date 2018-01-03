@@ -3,7 +3,7 @@ package def
 import "net"
 
 // ServerType 服务器类型
-type ServerType int
+type ServerType int32
 
 const (
 	//ServerTypeNormal lobby服务器
@@ -29,3 +29,13 @@ func IsTimeOut(err error) bool {
 	}
 	return false
 }
+
+//RUNMODE 运行模式
+type RUNMODE int32
+
+const (
+	//DEBUG ...
+	DEBUG RUNMODE = iota
+	//RELEASE .
+	RELEASE
+)

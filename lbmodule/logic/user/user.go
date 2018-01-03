@@ -2,9 +2,8 @@ package user
 
 import (
 	"fmt"
-	"net"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/holyreaper/ggserver/lbmodule/packet"
 
 	. "github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
@@ -19,17 +18,21 @@ func init() {
 }
 
 //Login Login
-func Login(cnn *net.TCPConn, reqData []byte) (rsp message.LoginMsgReply) {
-	//user login ...
-	var req message.LoginMsgRequest
-	if err := proto.Unmarshal(reqData, &req); err != nil {
-		rsp.Result = -1
-		return
-	}
+func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, req message.Message) (rsp message.Message) {
 
-	fmt.Printf("user %d Login success !!", req.Uid)
-	//charmanager.AddUser(UID(req.GetUid()))
-	charmanager.Login(cnn, UID(req.GetUid()))
-	//rsp.Result = 189
+	fmt.Printf("user %d Login success !!", req.LoginRequest.GetUid())
+
+	//rsp.Pack(packet.PKGLogin, &message.LoginMsgReply{Result: 2018})
+	rsp.LoginReply = &message.LoginMsgReply{}
+	rsp.LoginReply.Result = 2018
+	charmanager.Login(rpack, spack, UID(req.LoginRequest.GetUid()))
+
+	msg := message.Message{}
+	msg.Command = packet.PKGChat
+	msg.ChatRequest = &message.ChatMsgRequest{}
+	msg.ChatRequest.Fuid = 1001
+	msg.ChatRequest.Tuid = req.LoginRequest.GetUid()
+	msg.ChatRequest.Msg = "hello world "
+	//charmanager.AddMessageToUser(UID(req.LoginRequest.GetUid()), packet.PKGChat, &msg)
 	return
 }

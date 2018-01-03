@@ -3,15 +3,15 @@ package charmanager
 import (
 	"errors"
 	"fmt"
-	"net"
 	"time"
+
+	"github.com/holyreaper/ggserver/lbmodule/packet"
 
 	"github.com/golang/protobuf/proto"
 
 	"sync"
 
 	. "github.com/holyreaper/ggserver/def"
-	"github.com/holyreaper/ggserver/util/convert"
 )
 
 const (
@@ -50,13 +50,13 @@ type OnLineMng struct {
 }
 
 //AddUser 增加user
-func (cm *OnLineMng) AddUser(cnn *net.TCPConn, uid UID) bool {
+func (cm *OnLineMng) AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) bool {
 	cm.wrLock.Lock()
 	if mng, ok := cm.manager[uid]; ok {
 		//TODO release module
 		mng.LogOut(uid)
 	}
-	cmg := NewCharMng(cnn, uid)
+	cmg := NewCharMng(rpack, spack, uid)
 	cm.manager[uid] = cmg
 	cm.wrLock.Unlock()
 	if !cmg.Login(uid) {
@@ -106,6 +106,21 @@ func (cm *OnLineMng) SendMessageToUser(uid UID, tp int32, data proto.Message) (e
 	return
 }
 
+//AddMessageToUser AddMessageToUser
+func (cm *OnLineMng) AddMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
+	fmt.Println("find user   ", uid)
+	mng := cm.GetUser(uid)
+	if mng != nil {
+		fmt.Println("find user succ  ", uid)
+		charmng := mng.(*CharManager)
+		err = charmng.AddMessage(tp, data)
+		return
+	}
+	err = errors.New("user not online ")
+	fmt.Println("can not find user ", uid)
+	return
+}
+
 //GetUser get user
 func (cm *OnLineMng) GetUser(uid UID) interface{} {
 	cm.wrLock.RLock()
@@ -118,8 +133,8 @@ func (cm *OnLineMng) GetUser(uid UID) interface{} {
 }
 
 //AddUser add user
-func AddUser(cnn *net.TCPConn, uid UID) bool {
-	return onlineMng.AddUser(cnn, uid)
+func AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) bool {
+	return onlineMng.AddUser(rpack, spack, uid)
 }
 
 //DelUser delete user
@@ -138,9 +153,9 @@ func GetUser(uid UID) interface{} {
 }
 
 //Login user login
-func Login(cnn *net.TCPConn, uid UID) interface{} {
+func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) interface{} {
 	//各种login
-	onlineMng.AddUser(cnn, uid)
+	AddUser(rpack, spack, uid)
 	return nil
 }
 
@@ -154,7 +169,8 @@ func SendMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
 //CharManager
 type CharManager struct {
 	Manager
-	cnn       *net.TCPConn
+	rpack     chan<- packet.Packet
+	spack     chan<- packet.Packet
 	rwlock    *sync.RWMutex
 	keepAlive time.Duration
 	//userMng
@@ -181,47 +197,42 @@ func (cm *CharManager) SendMessage(tp int32, data proto.Message) (err error) {
 	//SendMessage ..
 	fmt.Println("SendMessage to user start ....")
 
-	cm.rwlock.Lock()
-	defer cm.rwlock.Unlock()
-
-	currSend := 0
-	var sendbuf []byte
-	rsp, err := proto.Marshal(data)
+	var pack packet.Packet
+	err = pack.Pack(tp, data)
 	if err != nil {
-		fmt.Println(" SendMessage to client  proto message mashal err \r\n", err)
+		fmt.Printf("sendMessage fail err %s", err)
 		return
 	}
-	sendbuf = append(sendbuf, convert.Int32ToBytes(int32(len(rsp)+8))...)
-	sendbuf = append(sendbuf, convert.Int32ToBytes(int32(tp))...)
-	sendbuf = append(sendbuf, rsp...)
+	cm.spack <- pack
+	return
+}
 
-	cm.cnn.SetWriteDeadline(time.Now().Add(time.Duration(10e9)))
-	for {
-		ln, err2 := cm.cnn.Write(sendbuf[currSend:])
-		if err2 != nil && ln != len(sendbuf[currSend:]) {
-			if IsTimeOut(err2) {
-				currSend += ln
-				continue
-			} else {
-				fmt.Println("send byte to client  err ", err)
-				return err2
-			}
-		}
-		if currSend+ln >= len(sendbuf) {
-			break
-		}
+//AddMessageToUser server  add  a Message to user's message channel  , pretent client message
+func AddMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
+	err = onlineMng.AddMessageToUser(uid, tp, data)
+	return
+}
+
+//AddMessage server  add  a Message to user's message channel  , pretent client message
+func (cm *CharManager) AddMessage(tp int32, data proto.Message) (err error) {
+	fmt.Println("addMessage to user start ...")
+	var pack packet.Packet
+	err = pack.Pack(tp, data)
+	if err != nil {
+		fmt.Printf("addMessage fail err %s", err)
+		return
 	}
-	fmt.Println("send data to client succ !!!")
+	cm.rpack <- pack
 	return
 }
 
 //NewCharMng new char mng
-func NewCharMng(cn *net.TCPConn, uid UID) *CharManager {
+func NewCharMng(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) *CharManager {
 	return &CharManager{
-		keepAlive: 1e9,
-		cnn:       cn,
-		userMng:   NewUserMng(uid),
-		chatMng:   NewChatMng(uid),
-		rwlock:    &sync.RWMutex{},
+		rpack:   rpack,
+		spack:   spack,
+		userMng: NewUserMng(uid),
+		chatMng: NewChatMng(uid),
+		rwlock:  &sync.RWMutex{},
 	}
 }

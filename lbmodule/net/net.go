@@ -5,8 +5,11 @@ import (
 	"io"
 	"net"
 	"os"
+	"reflect"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 
 	"github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
@@ -25,6 +28,10 @@ type LBNet struct {
 	readTimeOut  time.Duration
 	writeTimeOut time.Duration
 }
+
+//MAX_SEND .
+const MAX_SEND int32 = 10
+const MAX_RECV int32 = 10
 
 //NewLBNet new lbnet
 func NewLBNet() *LBNet {
@@ -89,8 +96,8 @@ func (lbnet *LBNet) Init(netproto string /*proto4 */, nettype string /*tcp*/, ip
 //HandleCnn handle cnn
 func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 	lbnet.waitGroup.Add(1)
-	recvPacket := make(chan *packet.Packet, 10)
-
+	recvPacket := make(chan packet.Packet, MAX_RECV)
+	sendPacket := make(chan packet.Packet, MAX_SEND)
 	addr := cnn.RemoteAddr().String()
 
 	defer func() {
@@ -106,15 +113,16 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 	var (
 		pLen    = make([]byte, 4)
 		pType   = make([]byte, 4)
-		pPacLen uint32
+		pPacLen int32
 		pacData = make([]byte, packet.MAXPACKETLEN)
 
-		cLen           = 0 //curr read pLen
-		cType          = 0 //curr read pType
-		cPacLen uint32 = 0 //curr read pPackLen
+		cLen    = 0   //curr read pLen
+		cType   = 0   //curr read pType
+		cPacLen int32 //curr read pPackLen
 
 	)
-	go lbnet.HandlePacket(cnn, recvPacket)
+	go lbnet.HandleSend(cnn, sendPacket)
+	go lbnet.HandlePacket(cnn, recvPacket, sendPacket)
 	fmt.Println("start serve the new client  ", cnn.RemoteAddr().String())
 	for {
 		select {
@@ -136,7 +144,7 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 			}
 
 			cLen += 4
-			if pPacLen = uint32(convert.BytesToInt32(pLen)); pPacLen > packet.MAXPACKETLEN {
+			if pPacLen = convert.BytesToInt32(pLen); pPacLen > packet.MAXPACKETLEN {
 				fmt.Printf("pacLen larger than pPacLen\r\n")
 				return
 			}
@@ -156,7 +164,7 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		if cPacLen < pPacLen {
 			if n, err := io.ReadFull(cnn, pacData[cPacLen:pPacLen-8]); err != nil && n != int(pPacLen-8-cPacLen) {
 				if def.IsTimeOut(err) {
-					cPacLen += uint32(n)
+					cPacLen += int32(n)
 					fmt.Printf("Read pacData time out  \r\n")
 					continue
 				}
@@ -167,9 +175,9 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		}
 
 		fmt.Println("HandleCnn get full packet data   ...")
-		recvPacket <- &packet.Packet{
+		recvPacket <- packet.Packet{
 			Len:  pPacLen,
-			Type: uint32(convert.BytesToInt32(pType)),
+			Type: convert.BytesToInt32(pType),
 			Data: pacData[:pPacLen-8],
 		}
 		cLen = 0
@@ -179,10 +187,10 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 }
 
 //HandlePacket handle packet
-func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, pack <-chan *packet.Packet) {
+func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spack chan<- packet.Packet) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Printf("handle packet panic error %v \r\n", err)
+			fmt.Printf("handle deal packet panic error %v \r\n", err)
 		}
 	}()
 	fmt.Println("HandlePacket ing ...")
@@ -191,27 +199,75 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, pack <-chan *packet.Packet) {
 		case <-lbnet.exitCh:
 			fmt.Printf("Stop HandlePacket \r\n")
 			return
-		case p := <-pack:
+		case p := <-rpack:
 			{
 				var err error
-				if p.Type == packet.PKGLogin {
-					ret, _ := funcall.Call(p.Type, cnn, p.Data)
-					for _, value := range ret {
-						itf := value.Interface()
-						pm := itf.(message.LoginMsgReply)
-						fmt.Printf("%v", pm.String())
-					}
+				var ret []reflect.Value
 
+				var lmsg message.Message
+				err = proto.Unmarshal(p.Data, &lmsg)
+				if err != nil {
+					fmt.Println("message unmarshal fail ", err)
+					continue
+				}
+				if p.Type == packet.PKGLogin {
+					ret, err = funcall.Call(p.Type, rpack, spack, lmsg)
 				} else {
-					_, err = funcall.Call(p.Type, p.Data)
+					ret, err = funcall.Call(p.Type, lmsg)
 				}
 				if err != nil {
 					fmt.Printf("func call type  %d error %s \r\n", p.Type, err)
 					continue
+				}
+				for _, value := range ret {
+					v := value.Interface()
+					//tmppack[index] = v.(packet.Packet)
+					//spack <- tmppack[index]
+					tmp := v.(message.Message)
+					tmppack := packet.Packet{}
+					tmppack.Pack(tmp.Command, &tmp)
+					spack <- tmppack
 				}
 			}
 		}
 
 	}
 
+}
+
+//HandleSend handle send packet...
+func (lbnet *LBNet) HandleSend(net *net.TCPConn, spack <-chan packet.Packet) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("handle send packet panic error %v \r\n", err)
+		}
+	}()
+	for {
+		select {
+		case <-lbnet.exitCh:
+			fmt.Printf("Stop Handle Send Packet \r\n")
+			return
+		case p := <-spack:
+			fmt.Printf("send packeting ... %d len %d ", p.Type, p.Len)
+			buff := p.FormatBuf()
+			currSend := 0
+			for {
+
+				ln, err := net.Write(buff[currSend:])
+				if err != nil && ln != len(buff[currSend:]) {
+					if def.IsTimeOut(err) {
+						currSend += ln
+						continue
+					} else {
+						fmt.Println("send byte to client  err ", err)
+						return
+					}
+				}
+				if currSend+ln >= len(buff) {
+					break
+				}
+			}
+		}
+
+	}
 }

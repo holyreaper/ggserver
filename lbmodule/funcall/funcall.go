@@ -9,7 +9,7 @@ import (
 
 //FunCall 函数映射
 type FunCall struct {
-	funcMap map[uint32]reflect.Value
+	funcMap map[int32]reflect.Value
 }
 
 var (
@@ -23,12 +23,12 @@ func init() {
 //NewFuncCall 获取funcall
 func NewFuncCall() *FunCall {
 	return &FunCall{
-		funcMap: make(map[uint32]reflect.Value),
+		funcMap: make(map[int32]reflect.Value),
 	}
 }
 
 //BindFunc bind call
-func BindFunc(tp uint32, fc interface{}) (err error) {
+func BindFunc(tp int32, fc interface{}) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			err = errors.New(strconv.Itoa(int(tp)) + " bind func error .")
@@ -45,7 +45,7 @@ func BindFunc(tp uint32, fc interface{}) (err error) {
 }
 
 //Call bind call
-func Call(tp uint32, params ...interface{}) (result []reflect.Value, err error) {
+func Call(tp int32, params ...interface{}) (result []reflect.Value, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			//err = errors.New(strconv.Itoa(int(tp)) + " is not callable.")

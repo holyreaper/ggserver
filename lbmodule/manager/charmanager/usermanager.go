@@ -1,11 +1,7 @@
 package charmanager
 
 import (
-	"fmt"
-
 	. "github.com/holyreaper/ggserver/def"
-	"github.com/holyreaper/ggserver/lbmodule/packet"
-	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 )
 
 //UserMng single user mng
@@ -17,12 +13,7 @@ type UserMng struct {
 //Login user
 func (cm *UserMng) Login(uid UID) bool {
 	cm.uid = uid
-	// load data from d
-	data := message.LoginMsgReply{
-		Result: 1314,
-	}
-	fmt.Println("userManager send packet to client ")
-	SendMessageToUser(uid, packet.PKGLogin, &data)
+
 	return true
 }
 
