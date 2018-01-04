@@ -25,6 +25,7 @@ const (
 
 var mode = flag.Int("mode", 0, "server mode ")
 var exit = make(chan int)
+var exit2 = make(chan bool, 1)
 
 func init() {
 	flag.Parse()
@@ -32,12 +33,18 @@ func init() {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Printf("server mode : %d\n", *mode)
+	exit2 <- true
+	switch {
+	case <-exit2:
+
+	}
+	switch {
+	case <-exit2:
+
+	}
 	conf := conf.GetConf()
-	if data, ok := conf["info"]; ok {
-		sliceArray := data.([]interface{})
-		for k, v := range sliceArray {
-			fmt.Printf("key %d, value %s", k, v)
-		}
+	for _, _ = range conf {
+
 	}
 	defer func() {
 		println("finish ...")

@@ -11,13 +11,13 @@ import (
 var fileName = "service.json"
 
 //GetConf 获取服务器配置
-func GetConf() map[string]interface{} {
-	confMap := make(map[string]interface{})
+func GetConf() []map[string]string {
+	var sliceConfMap []map[string]string
 	conf, err := readFile()
 	if err == nil {
-		jserr := json.Unmarshal(conf, &confMap)
+		jserr := json.Unmarshal(conf, &sliceConfMap)
 		if jserr == nil {
-			return confMap
+			return sliceConfMap
 		}
 		fmt.Printf("unMarshal data error  :%s", jserr.Error())
 	}
@@ -25,8 +25,7 @@ func GetConf() map[string]interface{} {
 
 }
 func init() {
-	fmt.Println("init conf")
-
+	fmt.Println("init conf...")
 }
 
 func readFile() ([]byte, error) {

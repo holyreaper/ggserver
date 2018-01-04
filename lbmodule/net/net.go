@@ -229,6 +229,7 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 					spack <- tmppack
 				}
 			}
+		default:
 		}
 
 	}
@@ -267,6 +268,7 @@ func (lbnet *LBNet) HandleSend(net *net.TCPConn, spack <-chan packet.Packet) {
 					break
 				}
 			}
+		default:
 		}
 
 	}

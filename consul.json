@@ -1,0 +1,63 @@
+{
+    "services": [
+      {
+        "id": "10001",
+        "name": "lb0001",
+        "tags": [
+          "lobby server  lb0001"
+        ],
+        "address": "192.168.52.117",
+        "port": 8090,
+        "checks": [
+        ]
+      },
+      {
+        "id": "10002",
+        "name": "lb0002",
+        "tags": [
+          "lobby server  lb0002"
+        ],
+        "address": "192.168.52.117",
+        "port": 8091,
+        "checks": 
+        [
+        ]
+      },
+      {
+        "id": "20001",
+        "name": "db0001",
+        "tags": [
+          "database server  db0001"
+        ],
+        "address": "192.168.52.117",
+        "port": 9090,
+        "checks": 
+        [
+        ]
+      },
+      {
+        "id": "20002",
+        "name": "db0002",
+        "tags": [
+          "database server  db0002"
+        ],
+        "address": "192.168.52.117",
+        "port": 9091,
+        "checks": 
+        [
+        ]
+      },
+      {
+        "id": "30001",
+        "name": "ct0001",
+        "tags": [
+          "center server  ct0001"
+        ],
+        "address": "192.168.52.117",
+        "port": 7070,
+        "checks": 
+        [
+        ]
+      }
+    ]
+  }

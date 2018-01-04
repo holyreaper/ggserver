@@ -1,6 +1,4 @@
 {
-    "name":"ggserver",
-    "ip":"192.168.1.177",
-    "port":"8090",
-    "info":["2","3"]
+    "consul_addr":"192.168.1.177:8500",
+    "datacenter":"ggserver"
 }
