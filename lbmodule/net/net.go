@@ -61,6 +61,7 @@ func (lbnet *LBNet) Start() {
 			break
 		default:
 		}
+		lbnet.listen.SetDeadline(100)
 		cnn, err := lbnet.listen.AcceptTCP()
 		if err != nil {
 			fmt.Println("have an invalide connect ", err)
