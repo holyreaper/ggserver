@@ -98,6 +98,7 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 	lbnet.waitGroup.Add(1)
 	recvPacket := make(chan packet.Packet, MAX_RECV)
 	sendPacket := make(chan packet.Packet, MAX_SEND)
+	exitFlag := make(chan bool)
 	addr := cnn.RemoteAddr().String()
 
 	defer func() {
@@ -121,8 +122,8 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		cPacLen int32 //curr read pPackLen
 
 	)
-	go lbnet.HandleSend(cnn, sendPacket)
-	go lbnet.HandlePacket(cnn, recvPacket, sendPacket)
+	go lbnet.HandleSend(cnn, sendPacket, exitFlag)
+	go lbnet.HandlePacket(cnn, recvPacket, sendPacket, exitFlag)
 	fmt.Println("start serve the new client  ", cnn.RemoteAddr().String())
 	for {
 		select {
@@ -187,17 +188,22 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 }
 
 //HandlePacket handle packet
-func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spack chan<- packet.Packet) {
+func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spack chan<- packet.Packet, exitCh chan bool) {
+	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("handle deal packet panic error %v \r\n", err)
 		}
+		lbnet.waitGroup.Done()
 	}()
 	fmt.Println("HandlePacket ing ...")
 	for {
 		select {
 		case <-lbnet.exitCh:
 			fmt.Printf("Stop HandlePacket \r\n")
+			return
+		case <-exitCh:
+			fmt.Println("Stop Handle Send Packet exit flag ")
 			return
 		case p := <-rpack:
 			{
@@ -211,7 +217,7 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 					continue
 				}
 				if p.Type == packet.PKGLogin {
-					ret, err = funcall.Call(p.Type, rpack, spack, lmsg)
+					ret, err = funcall.Call(p.Type, rpack, spack, exitCh, lmsg)
 				} else {
 					ret, err = funcall.Call(p.Type, lmsg)
 				}
@@ -237,16 +243,21 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 }
 
 //HandleSend handle send packet...
-func (lbnet *LBNet) HandleSend(net *net.TCPConn, spack <-chan packet.Packet) {
+func (lbnet *LBNet) HandleSend(net *net.TCPConn, spack <-chan packet.Packet, exitCh chan bool) {
+	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("handle send packet panic error %v \r\n", err)
 		}
+		lbnet.waitGroup.Done()
 	}()
 	for {
 		select {
 		case <-lbnet.exitCh:
-			fmt.Printf("Stop Handle Send Packet \r\n")
+			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
+			return
+		case <-exitCh:
+			fmt.Println("Stop Handle Send Packet exit flag ")
 			return
 		case p := <-spack:
 			fmt.Printf("send packeting ... %d len %d ", p.Type, p.Len)

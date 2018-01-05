@@ -18,14 +18,14 @@ func init() {
 }
 
 //Login Login
-func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, req message.Message) (rsp message.Message) {
+func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, req message.Message) (rsp message.Message) {
 
 	fmt.Printf("user %d Login success !!", req.LoginRequest.GetUid())
 
 	//rsp.Pack(packet.PKGLogin, &message.LoginMsgReply{Result: 2018})
 	rsp.LoginReply = &message.LoginMsgReply{}
 	rsp.LoginReply.Result = 2018
-	charmanager.Login(rpack, spack, UID(req.LoginRequest.GetUid()))
+	charmanager.Login(rpack, spack, exitCh, UID(req.LoginRequest.GetUid()))
 
 	msg := message.Message{}
 	msg.Command = packet.PKGChat

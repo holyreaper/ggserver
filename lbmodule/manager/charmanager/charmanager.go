@@ -32,7 +32,7 @@ func (*Manager) Login(UID) bool {
 }
 
 //LogOut .
-func (*Manager) LogOut(UID) bool {
+func (*Manager) LogOut() bool {
 	return false
 }
 
@@ -50,13 +50,13 @@ type OnLineMng struct {
 }
 
 //AddUser 增加user
-func (cm *OnLineMng) AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) bool {
+func (cm *OnLineMng) AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, uid UID) bool {
 	cm.wrLock.Lock()
 	if mng, ok := cm.manager[uid]; ok {
 		//TODO release module
-		mng.LogOut(uid)
+		mng.LogOut()
 	}
-	cmg := NewCharMng(rpack, spack, uid)
+	cmg := NewCharMng(rpack, spack, exitCh, uid)
 	cm.manager[uid] = cmg
 	cm.wrLock.Unlock()
 	if !cmg.Login(uid) {
@@ -74,6 +74,7 @@ func (cm *OnLineMng) DelUser(uid UID) bool {
 		return false
 	}
 	//TODO release module
+	cm.manager[uid].LogOut()
 	delete(cm.manager, uid)
 	return true
 }
@@ -85,7 +86,7 @@ func (cm *OnLineMng) DeleteAll() bool {
 	for k, v := range cm.manager {
 		//TODO release module
 		//		fmt.Println(v)
-		v.LogOut(v.uid)
+		v.LogOut()
 		delete(cm.manager, k)
 	}
 	return true
@@ -133,8 +134,8 @@ func (cm *OnLineMng) GetUser(uid UID) interface{} {
 }
 
 //AddUser add user
-func AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) bool {
-	return onlineMng.AddUser(rpack, spack, uid)
+func AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, uid UID) bool {
+	return onlineMng.AddUser(rpack, spack, exitCh, uid)
 }
 
 //DelUser delete user
@@ -153,9 +154,9 @@ func GetUser(uid UID) interface{} {
 }
 
 //Login user login
-func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) interface{} {
+func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, uid UID) interface{} {
 	//各种login
-	AddUser(rpack, spack, uid)
+	AddUser(rpack, spack, exitCh, uid)
 	return nil
 }
 
@@ -171,6 +172,7 @@ type CharManager struct {
 	Manager
 	rpack     chan<- packet.Packet
 	spack     chan<- packet.Packet
+	exitCh    chan bool
 	rwlock    *sync.RWMutex
 	keepAlive time.Duration
 	//userMng
@@ -186,9 +188,10 @@ func (cm *CharManager) Login(uid UID) bool {
 }
 
 //LogOut .
-func (cm *CharManager) LogOut(uid UID) bool {
-	cm.userMng.LogOut(uid)
-	cm.chatMng.LogOut(uid)
+func (cm *CharManager) LogOut() bool {
+	cm.userMng.LogOut()
+	cm.chatMng.LogOut()
+	close(cm.exitCh)
 	return false
 }
 
@@ -213,7 +216,7 @@ func AddMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
 	return
 }
 
-//AddMessage server  add  a Message to user's message channel  , pretent client message
+//AddMessage ..
 func (cm *CharManager) AddMessage(tp int32, data proto.Message) (err error) {
 	fmt.Println("addMessage to user start ...")
 	var pack packet.Packet
@@ -227,10 +230,11 @@ func (cm *CharManager) AddMessage(tp int32, data proto.Message) (err error) {
 }
 
 //NewCharMng new char mng
-func NewCharMng(rpack chan<- packet.Packet, spack chan<- packet.Packet, uid UID) *CharManager {
+func NewCharMng(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, uid UID) *CharManager {
 	return &CharManager{
 		rpack:   rpack,
 		spack:   spack,
+		exitCh:  exitCh,
 		userMng: NewUserMng(uid),
 		chatMng: NewChatMng(uid),
 		rwlock:  &sync.RWMutex{},

@@ -18,7 +18,7 @@ func (cm *UserMng) Login(uid UID) bool {
 }
 
 //LogOut user logout
-func (cm *UserMng) LogOut(uid UID) bool {
+func (cm *UserMng) LogOut() bool {
 	return true
 }
 
