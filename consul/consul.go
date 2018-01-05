@@ -26,6 +26,12 @@ func NewConsul() *Consul {
 	return consul
 }
 
+//GetServices .
+func GetServices() (ret map[string]*consulapi.AgentService, err error) {
+	cl := NewConsul()
+	return cl.GetServices()
+}
+
 //GetServices get all service
 func (c *Consul) GetServices() (ret map[string]*consulapi.AgentService, err error) {
 	conf := consulapi.DefaultConfig()

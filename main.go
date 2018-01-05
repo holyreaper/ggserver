@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"os"
 	"time"
 
 	"github.com/holyreaper/ggserver/client"
@@ -12,10 +14,16 @@ import (
 
 	"runtime"
 
-	"github.com/holyreaper/ggserver/conf"
 	"github.com/holyreaper/ggserver/rpcservice"
 
 	"flag"
+
+	"net/http"
+	_ "net/http/pprof"
+
+	"runtime/pprof"
+
+	"github.com/holyreaper/ggserver/lbmodule/lblog"
 )
 
 const (
@@ -25,7 +33,8 @@ const (
 
 var mode = flag.Int("mode", 0, "server mode ")
 var exit = make(chan int)
-var exit2 = make(chan bool, 1)
+
+var serverID = flag.Int("id", 0, "serverid ")
 
 func init() {
 	flag.Parse()
@@ -33,19 +42,23 @@ func init() {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Printf("server mode : %d\n", *mode)
-	exit2 <- true
-	switch {
-	case <-exit2:
+	lblog.GetLobbyLogger().LogInfo("server start server mode  %d  ", *mode)
+	//	conf := conf.GetConf()
+	//for _, _ = range conf {
 
+	//}
+	//debug list
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+	f, err := os.OpenFile("cpu.prof", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
 	}
-	switch {
-	case <-exit2:
+	defer f.Close()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 
-	}
-	conf := conf.GetConf()
-	for _, _ = range conf {
-
-	}
 	defer func() {
 		println("finish ...")
 	}()
@@ -57,7 +70,6 @@ func main() {
 	go client.Start()
 	go Tick()
 	<-exit
-
 }
 
 //Tick ...

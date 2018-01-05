@@ -7,7 +7,7 @@ type ServerType int32
 
 const (
 	//ServerTypeNormal lobby服务器
-	ServerTypeNormal ServerType = iota
+	ServerTypeNormal ServerType = iota + 1
 
 	//ServerTypeDB db服务器
 	ServerTypeDB
@@ -22,6 +22,11 @@ type UID int64
 // SID 	服务器id
 type SID int
 
+// SERVERBASEVALUE 服务器id/SERVERBASEVALUE = 服务器类型 ServerType
+const (
+	SERVERBASEVALUE = 10000
+)
+
 //IsTimeOut check net err
 func IsTimeOut(err error) bool {
 	if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
@@ -29,13 +34,3 @@ func IsTimeOut(err error) bool {
 	}
 	return false
 }
-
-//RUNMODE 运行模式
-type RUNMODE int32
-
-const (
-	//DEBUG ...
-	DEBUG RUNMODE = iota
-	//RELEASE .
-	RELEASE
-)
