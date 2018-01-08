@@ -153,7 +153,6 @@ func UserClient(ex <-chan bool) {
 		fmt.Println("unknown message type ")
 	}
 
-
 	cnn.Close()
 	fmt.Println("user client exit !!!!!!")
 	return

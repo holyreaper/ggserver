@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ctrpcpt;
+
+// The loing service definition.
+service CTRPCServer {
+ //KeepAlive rpc 
+  rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
+ //Login 
+  rpc Login (LoginRequest) returns (LoginReply){}
+}
+
+
+//KeepAlive
+message KeepAliveRequest{
+    int64 time =1;
+}
+message KeepAliveReply{
+    int32 result =1;
+}
+//login
+message LoginRequest{
+  int64 uid =1;
+}
+message LoginReply{
+  string result = 1;
+}

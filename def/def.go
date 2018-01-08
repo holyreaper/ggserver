@@ -12,8 +12,8 @@ const (
 	//ServerTypeDB db服务器
 	ServerTypeDB
 
-	//ServerTypeProxy 代理服务器
-	ServerTypeProxy
+	//ServerTypeCenter 中心服务器
+	ServerTypeCenter
 )
 
 //UID 玩家唯一标识

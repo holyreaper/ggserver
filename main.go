@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/holyreaper/ggserver/client"
-	"github.com/holyreaper/ggserver/lbservice"
-
 	"github.com/holyreaper/ggserver/def"
+	"github.com/holyreaper/ggserver/lbservice"
 
 	"fmt"
 
@@ -20,8 +20,6 @@ import (
 
 	"net/http"
 	_ "net/http/pprof"
-
-	"runtime/pprof"
 
 	"github.com/holyreaper/ggserver/lbmodule/lblog"
 )
@@ -39,26 +37,17 @@ var serverID = flag.Int("id", 0, "serverid ")
 func init() {
 	flag.Parse()
 }
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Printf("server mode : %d\n", *mode)
-	lblog.GetLobbyLogger().LogInfo("server start server mode  %d  ", *mode)
+	lblog.GetLogger().LogInfo("server start server mode  %d  ", *mode)
 	//	conf := conf.GetConf()
 	//for _, _ = range conf {
 
 	//}
 	//debug list
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-	f, err := os.OpenFile("cpu.prof", os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
-
+	//go Pprof()
 	defer func() {
 		println("finish ...")
 	}()
@@ -79,4 +68,16 @@ func Tick() {
 		fmt.Println("tick ", tick.C)
 	}
 	fmt.Println("tick exit")
+}
+
+//Pprof 检查
+func Pprof() {
+	log.Println(http.ListenAndServe("localhost:6060", nil))
+	f, err := os.OpenFile("cpu.prof", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 }

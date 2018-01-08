@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/holyreaper/ggserver/rpcservice/chat"
-	"github.com/holyreaper/ggserver/rpcservice/login"
-	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
-	"github.com/holyreaper/ggserver/rpcservice/pb/login"
-
 	"github.com/holyreaper/ggserver/def"
+	"github.com/holyreaper/ggserver/rpcservice/ctrpc"
+	"github.com/holyreaper/ggserver/rpcservice/dbrpc"
+	"github.com/holyreaper/ggserver/rpcservice/pb/ctrpc"
+	"github.com/holyreaper/ggserver/rpcservice/pb/dbrpc"
 	"google.golang.org/grpc"
 )
 
@@ -44,13 +43,11 @@ func (s *GGService) Start() {
 //RegisterModule 注册服务
 func (s *GGService) RegisterModule(rpcServer *grpc.Server) {
 	if s.st == def.ServerTypeNormal {
-		loginrpc.RegisterLoginRpcServer(rpcServer, &login.Login{Srv: s})
-		chatrpc.RegisterChatRpcServer(rpcServer, &chat.Chat{Srv: s})
 
 	} else if s.st == def.ServerTypeDB {
-
-	} else {
-		
+		dbrpcpt.RegisterDBRPCServerServer(rpcServer, &dbrpc.DBRPC{})
+	} else if s.st == def.ServerTypeCenter {
+		ctrpcpt.RegisterCTRPCServerServer(rpcServer, &ctrpc.CTRPC{})
 	}
 
 }

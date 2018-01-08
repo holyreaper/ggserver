@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package dbrpcpt;
+
+// The loing service definition.
+service DBRPCServer {
+ //KeepAlive rpc 
+  rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
+ //Login 
+  rpc Login (LoginRequest) returns (LoginReply){}
+}
+
+
+//KeepAlive
+message KeepAliveRequest{
+    int64 time =1;
+}
+message KeepAliveReply{
+    int32 result =1;
+}
+//login
+message LoginRequest{
+  int64 uid =1;
+}
+message LoginReply{
+  int64 uid =1;
+  int64 createtime =2;
+  string name =3;
+  int32 level =4;
+  int32 exp = 5;
+  string data   = 6;
+}

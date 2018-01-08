@@ -10,7 +10,7 @@ func init() {
 	globbyLog = glog.NewGLog("lobby_")
 }
 
-//GetLobbyLogger GetLobbyLogger
-func GetLobbyLogger() *glog.GLog {
+//GetLogger GetLobbyLogger
+func GetLogger() *glog.GLog {
 	return globbyLog
 }
