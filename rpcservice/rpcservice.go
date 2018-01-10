@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/holyreaper/ggserver/rpcservice/rpclog"
+
+	"google.golang.org/grpc/keepalive"
+
 	"github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/rpcservice/ctrpc"
 	"github.com/holyreaper/ggserver/rpcservice/dbrpc"
@@ -22,21 +26,31 @@ type GGService struct {
 }
 
 // Start start service
-func (s *GGService) Start() {
+func (s *GGService) Start(exitCh <-chan bool) {
+
+	listen, err := net.Listen("tcp", "127.0.0.1:8090")
+	if err != nil {
+		fmt.Println("listen fail ....")
+		return
+	}
+
+	keepaliveParam := grpc.KeepaliveParams(keepalive.ServerParameters{})
+
+	server := grpc.NewServer(keepaliveParam)
+
+	s.RegisterModule(server)
+
+	rpclog.GetLogger().LogInfo("rpc server type %d start !!!", s.st)
+	go server.Serve(listen)
+
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf(" GGServer Start Error : %s ", err)
 		}
+		server.Stop()
+		rpclog.GetLogger().LogInfo("rpc server type %d stop !!!", s.st)
 	}()
-	listen, err := net.Listen("tcp", "127.0.0.1:8090")
-	if err != nil {
-		fmt.Println("listen fail ....")
-		panic(-1)
-	}
-	LoginServer := grpc.NewServer()
-	s.RegisterModule(LoginServer)
-	fmt.Println("server start ...")
-	go LoginServer.Serve(listen)
+	<-exitCh
 
 }
 
@@ -45,9 +59,9 @@ func (s *GGService) RegisterModule(rpcServer *grpc.Server) {
 	if s.st == def.ServerTypeNormal {
 
 	} else if s.st == def.ServerTypeDB {
-		dbrpcpt.RegisterDBRPCServerServer(rpcServer, &dbrpc.DBRPC{})
+		dbrpcpt.RegisterDBRPCServer(rpcServer, &dbrpc.DBRPC{})
 	} else if s.st == def.ServerTypeCenter {
-		ctrpcpt.RegisterCTRPCServerServer(rpcServer, &ctrpc.CTRPC{})
+		ctrpcpt.RegisterCTRPCServer(rpcServer, &ctrpc.CTRPC{})
 	}
 
 }

@@ -8,40 +8,38 @@ import (
 
 //LBService ...
 type LBService struct {
-	exitCh chan struct{}
-	lbnet  *lbnet.LBNet
+	lbnet *lbnet.LBNet
 }
 
 //NewLBService new
 func NewLBService() *LBService {
 	return &LBService{
-		exitCh: make(chan struct{}),
-		lbnet:  lbnet.NewLBNet(),
+		lbnet: lbnet.NewLBNet(),
 	}
 }
 
 //init 初始化
-func (lb *LBService) init() bool {
+func (lb *LBService) init() error {
 	bindip := "127.0.0.1:8091"
-	lb.lbnet.Init("tcp", "tcp", bindip)
-	return true
+	return lb.lbnet.Init("tcp", bindip)
 }
 
 //Start start service
-func (lb *LBService) Start() {
-	if !lb.init() {
+func (lb *LBService) Start(exitCh <-chan bool) (err error) {
+	err = lb.init()
+	if err != nil {
 		return
 	}
 	defer func() {
-		lb.lbnet.Stop()
+		lb.Stop()
 	}()
-	lb.lbnet.Start()
-
+	go lb.lbnet.Start()
+	<-exitCh
+	return
 }
 
 //Stop stop server
 func (lb *LBService) Stop() {
-	close(lb.exitCh)
 	lb.lbnet.Stop()
 	fmt.Println("lbserver stop ...")
 }

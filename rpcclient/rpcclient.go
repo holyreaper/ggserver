@@ -1,10 +1,18 @@
 package rpcclient
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/holyreaper/ggserver/def"
+	"github.com/holyreaper/ggserver/util"
+
+	"github.com/holyreaper/ggserver/rpcservice/pb/dbrpc"
+
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/holyreaper/ggserver/rpcservice/pb/ctrpc"
 
@@ -26,11 +34,12 @@ type RPCClient struct {
 }
 
 //StartClient start rpc client
-func (cl *RPCClient) StartClient(wg *sync.WaitGroup) {
+func (cl *RPCClient) StartClient() {
 	cl.cnn()
 }
 func (cl *RPCClient) cnn() {
-	client, err := grpc.Dial("127.0.0.1:8090", grpc.WithInsecure())
+	keepaliveParam := grpc.WithKeepaliveParams(keepalive.ClientParameters{PermitWithoutStream: true})
+	client, err := grpc.Dial("127.0.0.1:8090", grpc.WithInsecure(), keepaliveParam)
 	if err != nil {
 		fmt.Println("client exit error msg ", err)
 		return
@@ -39,16 +48,30 @@ func (cl *RPCClient) cnn() {
 }
 
 //GetCTRPC .
-func (cl *RPCClient) GetCTRPC() ctrpcpt.CTRPCServerClient {
-	cnn := ctrpcpt.NewCTRPCServerClient(cl.client)
-	cl.client.GetState()
-	return cnn
+func (cl *RPCClient) GetCTRPC() (cnn ctrpcpt.CTRPCClient, err error) {
+	if cl.tp == def.ServerTypeNormal {
+		cnn = ctrpcpt.NewCTRPCClient(cl.client)
+	} else if cl.tp == def.ServerTypeCenter {
+		err = errors.New("have no ctrpc function")
+	} else if cl.tp == def.ServerTypeDB {
+		err = errors.New("have no ctrpc function")
+	}
+
+	return cnn, err
 }
 
-func (cl *RPCClient) execute(data interface{}) (ret interface{}) {
-
-	return
+//GetDBRPC .
+func (cl *RPCClient) GetDBRPC() (cnn dbrpcpt.DBRPCClient, err error) {
+	if cl.tp == def.ServerTypeNormal {
+		err = errors.New("have no dbrpc function")
+	} else if cl.tp == def.ServerTypeCenter {
+		err = errors.New("have no dbrpc function")
+	} else if cl.tp == def.ServerTypeDB {
+		cnn = dbrpcpt.NewDBRPCClient(cl.client)
+	}
+	return cnn, err
 }
+
 func (cl *RPCClient) exit() {
 	if cl.client != nil {
 		cl.client.Close()
@@ -57,9 +80,8 @@ func (cl *RPCClient) exit() {
 
 //RPCClientMng .
 type RPCClientMng struct {
-	client    map[SID]*RPCClient
-	rwMutex   sync.RWMutex
-	waitGroup *sync.WaitGroup
+	client  map[SID]*RPCClient
+	rwMutex sync.RWMutex
 }
 
 var grpcmng *RPCClientMng
@@ -69,9 +91,8 @@ var gexitCh chan bool
 
 func init() {
 	grpcmng = &RPCClientMng{
-		client:    make(map[SID]*RPCClient, 10),
-		rwMutex:   sync.RWMutex{},
-		waitGroup: &sync.WaitGroup{},
+		client:  make(map[SID]*RPCClient, 10),
+		rwMutex: sync.RWMutex{},
 	}
 	//gexitCh = make(chan bool)
 }
@@ -117,15 +138,18 @@ func (mng *RPCClientMng) rfreshSvr() {
 			addr: v.Address,
 			port: int32(v.Port),
 			id:   SID(id),
-			tp:   ServerType(id / SERVERBASEVALUE),
+			tp:   util.GetServerType(SID(id)),
 		}
 		if gserverID != cl.id {
 			if _, ok := grpcmng.client[cl.id]; ok {
 				//have got yet
 			} else {
 				//new service
-				cl.StartClient(mng.waitGroup)
-				grpcmng.client[cl.id] = &cl
+				if cl.tp != util.GetServerType(gserverID) {
+					cl.StartClient()
+					grpcmng.client[cl.id] = &cl
+				}
+
 			}
 		}
 
@@ -133,7 +157,6 @@ func (mng *RPCClientMng) rfreshSvr() {
 }
 
 func (mng *RPCClientMng) exit() {
-	mng.waitGroup.Wait()
 	rpclog.GetLogger().LogInfo("rpcservice all exit !!!")
 	return
 }

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"reflect"
 	"sync"
 	"time"
+
+	"github.com/holyreaper/ggserver/lbmodule/lblog"
 
 	"github.com/golang/protobuf/proto"
 
@@ -23,7 +24,7 @@ import (
 //LBNet net
 type LBNet struct {
 	listen       *net.TCPListener
-	exitCh       chan struct{}
+	exitCh       chan bool
 	waitGroup    *sync.WaitGroup
 	readTimeOut  time.Duration
 	writeTimeOut time.Duration
@@ -36,7 +37,7 @@ const MAX_RECV int32 = 10
 //NewLBNet new lbnet
 func NewLBNet() *LBNet {
 	return &LBNet{
-		exitCh:       make(chan struct{}),
+		exitCh:       make(chan bool),
 		listen:       &net.TCPListener{},
 		waitGroup:    &sync.WaitGroup{},
 		readTimeOut:  time.Duration(30),
@@ -46,13 +47,13 @@ func NewLBNet() *LBNet {
 
 // Start deal cnn
 func (lbnet *LBNet) Start() {
-	fmt.Println("lbnet start ...")
+	lblog.GetLogger().LogInfo("lbnet start ...")
 	defer func() {
 
 		if err := recover(); err != nil {
-			fmt.Println("lbnet  have panic ", err)
+			lblog.GetLogger().LogFatal("lbnet  have panic ", err)
 		}
-		fmt.Println("lbnet end ...")
+		lblog.GetLogger().LogInfo("lbnet end ...")
 	}()
 	for {
 
@@ -61,14 +62,14 @@ func (lbnet *LBNet) Start() {
 			break
 		default:
 		}
-		lbnet.listen.SetDeadline(100)
+		lbnet.listen.SetDeadline(time.Now().Add(5 * time.Second))
 		cnn, err := lbnet.listen.AcceptTCP()
 		if err != nil {
-			fmt.Println("have an invalide connect ", err)
+			lblog.GetLogger().LogFatal("have an invalide connect ", err)
 			continue
 			//if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
 		}
-		fmt.Println("have a Cnn accept start to serve her ")
+		lblog.GetLogger().LogFatal("have a Cnn accept start to serve her ")
 		go lbnet.HandleCnn(cnn)
 	}
 
@@ -81,17 +82,18 @@ func (lbnet *LBNet) Stop() {
 }
 
 // Init deal cnn
-func (lbnet *LBNet) Init(netproto string /*proto4 */, nettype string /*tcp*/, ipaddr string) {
+func (lbnet *LBNet) Init(nettype string /*tcp*/, ipaddr string) (err error) {
 	tcpAddr, err := net.ResolveTCPAddr(nettype, ipaddr)
 	if err != nil {
-		fmt.Println("err")
-		os.Exit(-1)
+		lblog.GetLogger().LogFatal("lbserver ResolveTCPAddr  addr %s error %s   ", ipaddr, err)
+		return
 	}
 	lbnet.listen, err = net.ListenTCP(nettype, tcpAddr)
 	if err != nil {
-		fmt.Println("LbServer Listen error ", err)
-		os.Exit(-2)
+		lblog.GetLogger().LogFatal("lbserver Listen error %s", err)
+		return
 	}
+	return nil
 }
 
 //HandleCnn handle cnn
@@ -110,6 +112,7 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 		}()
 		lbnet.waitGroup.Done()
 		cnn.Close()
+		close(exitFlag)
 	}()
 
 	var (
@@ -125,15 +128,16 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 	)
 	go lbnet.HandleSend(cnn, sendPacket, exitFlag)
 	go lbnet.HandlePacket(cnn, recvPacket, sendPacket, exitFlag)
-	fmt.Println("start serve the new client  ", cnn.RemoteAddr().String())
+	lblog.GetLogger().LogInfo("start service for  the new client  ", cnn.RemoteAddr().String())
 	for {
 		select {
 		case <-lbnet.exitCh:
-			fmt.Printf("Stop HandleCnn\r\n")
+			close(exitFlag)
+			lblog.GetLogger().LogInfo("cnn exit ")
 			return
 		default:
 		}
-		cnn.SetReadDeadline(time.Now().Add(10e9))
+		cnn.SetReadDeadline(time.Now().Add(5 * time.Second))
 		if cLen < 4 {
 			if n, err := io.ReadFull(cnn, pLen[cLen:]); err != nil && n != 4 {
 				if def.IsTimeOut(err) {

@@ -116,101 +116,101 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for CTRPCServer service
+// Client API for CTRPC service
 
-type CTRPCServerClient interface {
+type CTRPCClient interface {
 	// KeepAlive rpc
 	KeepAlive(ctx context.Context, in *KeepAliveRequest, opts ...grpc.CallOption) (*KeepAliveReply, error)
 	// Login
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 }
 
-type cTRPCServerClient struct {
+type cTRPCClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewCTRPCServerClient(cc *grpc.ClientConn) CTRPCServerClient {
-	return &cTRPCServerClient{cc}
+func NewCTRPCClient(cc *grpc.ClientConn) CTRPCClient {
+	return &cTRPCClient{cc}
 }
 
-func (c *cTRPCServerClient) KeepAlive(ctx context.Context, in *KeepAliveRequest, opts ...grpc.CallOption) (*KeepAliveReply, error) {
+func (c *cTRPCClient) KeepAlive(ctx context.Context, in *KeepAliveRequest, opts ...grpc.CallOption) (*KeepAliveReply, error) {
 	out := new(KeepAliveReply)
-	err := grpc.Invoke(ctx, "/ctrpcpt.CTRPCServer/KeepAlive", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/ctrpcpt.CTRPC/KeepAlive", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *cTRPCServerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error) {
+func (c *cTRPCClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error) {
 	out := new(LoginReply)
-	err := grpc.Invoke(ctx, "/ctrpcpt.CTRPCServer/Login", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/ctrpcpt.CTRPC/Login", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for CTRPCServer service
+// Server API for CTRPC service
 
-type CTRPCServerServer interface {
+type CTRPCServer interface {
 	// KeepAlive rpc
 	KeepAlive(context.Context, *KeepAliveRequest) (*KeepAliveReply, error)
 	// Login
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 }
 
-func RegisterCTRPCServerServer(s *grpc.Server, srv CTRPCServerServer) {
-	s.RegisterService(&_CTRPCServer_serviceDesc, srv)
+func RegisterCTRPCServer(s *grpc.Server, srv CTRPCServer) {
+	s.RegisterService(&_CTRPC_serviceDesc, srv)
 }
 
-func _CTRPCServer_KeepAlive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CTRPC_KeepAlive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(KeepAliveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CTRPCServerServer).KeepAlive(ctx, in)
+		return srv.(CTRPCServer).KeepAlive(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ctrpcpt.CTRPCServer/KeepAlive",
+		FullMethod: "/ctrpcpt.CTRPC/KeepAlive",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CTRPCServerServer).KeepAlive(ctx, req.(*KeepAliveRequest))
+		return srv.(CTRPCServer).KeepAlive(ctx, req.(*KeepAliveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CTRPCServer_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CTRPC_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CTRPCServerServer).Login(ctx, in)
+		return srv.(CTRPCServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ctrpcpt.CTRPCServer/Login",
+		FullMethod: "/ctrpcpt.CTRPC/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CTRPCServerServer).Login(ctx, req.(*LoginRequest))
+		return srv.(CTRPCServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _CTRPCServer_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "ctrpcpt.CTRPCServer",
-	HandlerType: (*CTRPCServerServer)(nil),
+var _CTRPC_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "ctrpcpt.CTRPC",
+	HandlerType: (*CTRPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "KeepAlive",
-			Handler:    _CTRPCServer_KeepAlive_Handler,
+			Handler:    _CTRPC_KeepAlive_Handler,
 		},
 		{
 			MethodName: "Login",
-			Handler:    _CTRPCServer_Login_Handler,
+			Handler:    _CTRPC_Login_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -220,7 +220,7 @@ var _CTRPCServer_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("ctrpc.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 201 bytes of a gzipped FileDescriptorProto
+	// 195 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2e, 0x29, 0x2a,
 	0x48, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x07, 0x73, 0x0a, 0x4a, 0x94, 0xd4, 0xb8,
 	0x04, 0xbc, 0x53, 0x53, 0x0b, 0x1c, 0x73, 0x32, 0xcb, 0x52, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b,
@@ -228,10 +228,10 @@ var fileDescriptor0 = []byte{
 	0xc0, 0x6c, 0x25, 0x0d, 0x2e, 0x3e, 0x24, 0x75, 0x05, 0x39, 0x95, 0x42, 0x62, 0x5c, 0x6c, 0x45,
 	0xa9, 0xc5, 0xa5, 0x39, 0x25, 0x60, 0x75, 0xac, 0x41, 0x50, 0x9e, 0x92, 0x02, 0x17, 0x8f, 0x4f,
 	0x7e, 0x7a, 0x66, 0x1e, 0xcc, 0x34, 0x01, 0x2e, 0xe6, 0xd2, 0xcc, 0x14, 0xa8, 0x61, 0x20, 0xa6,
-	0x92, 0x0a, 0x17, 0x17, 0x54, 0x05, 0xa6, 0x39, 0x9c, 0x30, 0x73, 0x8c, 0xda, 0x19, 0xb9, 0xb8,
-	0x9d, 0x43, 0x82, 0x02, 0x9c, 0x83, 0x53, 0x8b, 0xca, 0x52, 0x8b, 0x84, 0x1c, 0xb9, 0x38, 0xe1,
-	0x2e, 0x10, 0x92, 0xd4, 0x83, 0x7a, 0x40, 0x0f, 0xdd, 0xf5, 0x52, 0xe2, 0xd8, 0xa4, 0x0a, 0x72,
-	0x2a, 0x95, 0x18, 0x84, 0x4c, 0xb9, 0x58, 0xc1, 0x16, 0x0b, 0x89, 0xc2, 0xd5, 0x20, 0x3b, 0x55,
-	0x4a, 0x18, 0x5d, 0x18, 0xac, 0x2d, 0x89, 0x0d, 0x1c, 0x66, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x5d, 0x79, 0x63, 0x56, 0x42, 0x01, 0x00, 0x00,
+	0x92, 0x0a, 0x17, 0x17, 0x54, 0x05, 0xa6, 0x39, 0x9c, 0x30, 0x73, 0x8c, 0x1a, 0x19, 0xb9, 0x58,
+	0x9d, 0x43, 0x82, 0x02, 0x9c, 0x85, 0x1c, 0xb9, 0x38, 0xe1, 0x76, 0x0b, 0x49, 0xea, 0x41, 0x9d,
+	0xae, 0x87, 0xee, 0x6e, 0x29, 0x71, 0x6c, 0x52, 0x05, 0x39, 0x95, 0x4a, 0x0c, 0x42, 0xa6, 0x5c,
+	0xac, 0x60, 0x2b, 0x85, 0x44, 0xe1, 0x6a, 0x90, 0x1d, 0x29, 0x25, 0x8c, 0x2e, 0x0c, 0xd6, 0x96,
+	0xc4, 0x06, 0x0e, 0x2d, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd4, 0x47, 0x4f, 0xdd, 0x3c,
+	0x01, 0x00, 0x00,
 }

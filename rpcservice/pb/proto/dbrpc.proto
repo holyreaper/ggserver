@@ -3,7 +3,7 @@ syntax = "proto3";
 package dbrpcpt;
 
 // The loing service definition.
-service DBRPCServer {
+service DBRPC {
  //KeepAlive rpc 
   rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
  //Login 

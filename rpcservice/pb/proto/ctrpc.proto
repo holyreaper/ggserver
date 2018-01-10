@@ -3,7 +3,7 @@ syntax = "proto3";
 package ctrpcpt;
 
 // The loing service definition.
-service CTRPCServer {
+service CTRPC {
  //KeepAlive rpc 
   rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
  //Login 
