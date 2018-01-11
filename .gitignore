@@ -1,5 +1,4 @@
-.exe
+*.exe
 tmp/
 debug
-.log
-ggserver.exe
+*.log

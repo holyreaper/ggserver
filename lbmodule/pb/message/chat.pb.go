@@ -15,6 +15,8 @@ It has these top-level messages:
 	Message
 	LoginMsgRequest
 	LoginMsgReply
+	LogOutMsgRequest
+	LogOutMsgReply
 */
 package message
 

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/holyreaper/ggserver/lbmodule/lblog"
+	. "github.com/holyreaper/ggserver/glog"
 
 	"github.com/golang/protobuf/proto"
 
@@ -47,13 +47,12 @@ func NewLBNet() *LBNet {
 
 // Start deal cnn
 func (lbnet *LBNet) Start() {
-	lblog.GetLogger().LogInfo("lbnet start ...")
+	LogInfo("lbnet start ...")
 	defer func() {
-
 		if err := recover(); err != nil {
-			lblog.GetLogger().LogFatal("lbnet  have panic ", err)
+			LogFatal("lbnet  have panic ", err)
 		}
-		lblog.GetLogger().LogInfo("lbnet end ...")
+		LogInfo("lbnet end ...")
 	}()
 	for {
 
@@ -65,11 +64,13 @@ func (lbnet *LBNet) Start() {
 		lbnet.listen.SetDeadline(time.Now().Add(5 * time.Second))
 		cnn, err := lbnet.listen.AcceptTCP()
 		if err != nil {
-			lblog.GetLogger().LogFatal("have an invalide connect ", err)
-			continue
-			//if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
+			if def.IsTimeOut(err) {
+				continue
+			} else {
+				lbnet.Stop()
+			}
 		}
-		lblog.GetLogger().LogFatal("have a Cnn accept start to serve her ")
+		LogInfo("have a Cnn accept start to serve her ")
 		go lbnet.HandleCnn(cnn)
 	}
 
@@ -85,12 +86,12 @@ func (lbnet *LBNet) Stop() {
 func (lbnet *LBNet) Init(nettype string /*tcp*/, ipaddr string) (err error) {
 	tcpAddr, err := net.ResolveTCPAddr(nettype, ipaddr)
 	if err != nil {
-		lblog.GetLogger().LogFatal("lbserver ResolveTCPAddr  addr %s error %s   ", ipaddr, err)
+		LogFatal("lbserver ResolveTCPAddr  addr %s error %s   ", ipaddr, err)
 		return
 	}
 	lbnet.listen, err = net.ListenTCP(nettype, tcpAddr)
 	if err != nil {
-		lblog.GetLogger().LogFatal("lbserver Listen error %s", err)
+		LogFatal("lbserver Listen error %s", err)
 		return
 	}
 	return nil
@@ -128,12 +129,12 @@ func (lbnet *LBNet) HandleCnn(cnn *net.TCPConn) {
 	)
 	go lbnet.HandleSend(cnn, sendPacket, exitFlag)
 	go lbnet.HandlePacket(cnn, recvPacket, sendPacket, exitFlag)
-	lblog.GetLogger().LogInfo("start service for  the new client  ", cnn.RemoteAddr().String())
+	LogInfo("start service for  the new client  ", cnn.RemoteAddr().String())
 	for {
 		select {
 		case <-lbnet.exitCh:
 			close(exitFlag)
-			lblog.GetLogger().LogInfo("cnn exit ")
+			LogInfo("cnn exit ")
 			return
 		default:
 		}
@@ -201,6 +202,7 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 		}
 		lbnet.waitGroup.Done()
 	}()
+	var uid int64
 	fmt.Println("HandlePacket ing ...")
 	for {
 		select {
@@ -214,7 +216,6 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 			{
 				var err error
 				var ret []reflect.Value
-
 				var lmsg message.Message
 				err = proto.Unmarshal(p.Data, &lmsg)
 				if err != nil {
@@ -223,7 +224,19 @@ func (lbnet *LBNet) HandlePacket(cnn *net.TCPConn, rpack chan packet.Packet, spa
 				}
 				if p.Type == packet.PKGLogin {
 					ret, err = funcall.Call(p.Type, rpack, spack, exitCh, lmsg)
+					uid = lmsg.Uid
 				} else {
+					if uid <= 0 {
+						//illegal method
+						LogFatal("net have an illegal request disconnect %s", cnn.RemoteAddr().String())
+						p.Clear()
+						lmsg.LogoutReply.Result = "illegal request disconnect !!"
+						p.Pack(packet.PkLogOut, &lmsg)
+						spack <- p
+						exitCh <- true
+						return
+					}
+					lmsg.Uid = uid
 					ret, err = funcall.Call(p.Type, lmsg)
 				}
 				if err != nil {

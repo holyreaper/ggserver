@@ -1,10 +1,13 @@
 package glog
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/holyreaper/ggserver/def"
 )
 
 const (
@@ -34,6 +37,22 @@ type GLog struct {
 // init ...
 func init() {
 
+}
+
+var gLogger *GLog
+
+//InitLog ...
+func InitLog(tp def.ServerType, id def.SID) {
+	if def.ServerTypeNormal == tp {
+		gLogger = NewGLog("lobby_" + strconv.Itoa(int(id)))
+	} else if def.ServerTypeDB == tp {
+		gLogger = NewGLog("db_" + strconv.Itoa(int(id)))
+	} else if def.ServerTypeCenter == tp {
+		gLogger = NewGLog("center" + strconv.Itoa(int(id)))
+	} else {
+		fmt.Printf("InitLog fatal unknown servertype %d ", tp)
+		gLogger = nil
+	}
 }
 
 //NewGLog new glog
@@ -67,29 +86,29 @@ func (glog *GLog) getLogger() *log.Logger {
 }
 
 //LogInfo info mode
-func (glog *GLog) LogInfo(format string, v ...interface{}) {
-	glog.getLogger()
-	glog.Log.SetPrefix(INFO)
-	glog.Log.Printf(format+"\r\n", v...)
+func LogInfo(format string, v ...interface{}) {
+	gLogger.getLogger()
+	gLogger.Log.SetPrefix(INFO)
+	gLogger.Log.Printf(format+"\r\n", v...)
 }
 
 //LogDebug DEBUG mode
-func (glog *GLog) LogDebug(format string, v ...interface{}) {
-	glog.getLogger()
-	glog.Log.SetPrefix(DEBUG)
-	glog.Log.Printf(format+"\r\n", v...)
+func LogDebug(format string, v ...interface{}) {
+	gLogger.getLogger()
+	gLogger.Log.SetPrefix(DEBUG)
+	gLogger.Log.Printf(format+"\r\n", v...)
 }
 
 //LogWaring WARNING mode
-func (glog *GLog) LogWaring(format string, v ...interface{}) {
-	glog.getLogger()
-	glog.Log.SetPrefix(WARNING)
-	glog.Log.Printf(format+"\r\n", v...)
+func LogWaring(format string, v ...interface{}) {
+	gLogger.getLogger()
+	gLogger.Log.SetPrefix(WARNING)
+	gLogger.Log.Printf(format+"\r\n", v...)
 }
 
 //LogFatal FATAL mode
-func (glog *GLog) LogFatal(format string, v ...interface{}) {
-	glog.getLogger()
-	glog.Log.SetPrefix(FATAL)
-	glog.Log.Printf(format+"\r\n", v...)
+func LogFatal(format string, v ...interface{}) {
+	gLogger.getLogger()
+	gLogger.Log.SetPrefix(FATAL)
+	gLogger.Log.Printf(format+"\r\n", v...)
 }

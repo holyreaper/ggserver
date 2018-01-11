@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/holyreaper/ggserver/rpcservice/rpclog"
-
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/holyreaper/ggserver/def"
+	. "github.com/holyreaper/ggserver/glog"
 	"github.com/holyreaper/ggserver/rpcservice/ctrpc"
 	"github.com/holyreaper/ggserver/rpcservice/dbrpc"
 	"github.com/holyreaper/ggserver/rpcservice/pb/ctrpc"
@@ -25,8 +24,15 @@ type GGService struct {
 	st def.ServerType
 }
 
+var gRPCService *GGService
+
+//Init Init Rpcservice
+func Init(serverType def.ServerType) {
+	gRPCService = &GGService{st: serverType}
+}
+
 // Start start service
-func (s *GGService) Start(exitCh <-chan bool) {
+func Start(exitCh <-chan bool) {
 
 	listen, err := net.Listen("tcp", "127.0.0.1:8090")
 	if err != nil {
@@ -38,9 +44,9 @@ func (s *GGService) Start(exitCh <-chan bool) {
 
 	server := grpc.NewServer(keepaliveParam)
 
-	s.RegisterModule(server)
+	gRPCService.RegisterModule(server)
 
-	rpclog.GetLogger().LogInfo("rpc server type %d start !!!", s.st)
+	LogInfo("rpc server type %d start !!!", gRPCService.st)
 	go server.Serve(listen)
 
 	defer func() {
@@ -48,7 +54,7 @@ func (s *GGService) Start(exitCh <-chan bool) {
 			fmt.Printf(" GGServer Start Error : %s ", err)
 		}
 		server.Stop()
-		rpclog.GetLogger().LogInfo("rpc server type %d stop !!!", s.st)
+		LogInfo("rpc server type %d stop !!!", gRPCService.st)
 	}()
 	<-exitCh
 
@@ -64,9 +70,4 @@ func (s *GGService) RegisterModule(rpcServer *grpc.Server) {
 		ctrpcpt.RegisterCTRPCServer(rpcServer, &ctrpc.CTRPC{})
 	}
 
-}
-
-//NewGGService new 服务
-func NewGGService(serverType def.ServerType) *GGService {
-	return &GGService{st: serverType}
 }

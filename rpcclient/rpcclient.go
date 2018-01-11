@@ -18,7 +18,7 @@ import (
 
 	"github.com/holyreaper/ggserver/consul"
 	. "github.com/holyreaper/ggserver/def"
-	"github.com/holyreaper/ggserver/rpcservice/rpclog"
+	. "github.com/holyreaper/ggserver/glog"
 	"google.golang.org/grpc"
 )
 
@@ -117,7 +117,6 @@ func checkSvr() {
 			//exit
 		}
 	}
-
 }
 
 func (mng *RPCClientMng) rfreshSvr() {
@@ -128,7 +127,7 @@ func (mng *RPCClientMng) rfreshSvr() {
 
 	svr, err := consul.GetServices()
 	if err != nil {
-		rpclog.GetLogger().LogFatal("rpcclient getservice fail %s ", err)
+		LogFatal("rpcclient getservice fail %s ", err)
 		return
 	}
 	for _, v := range svr {
@@ -149,7 +148,6 @@ func (mng *RPCClientMng) rfreshSvr() {
 					cl.StartClient()
 					grpcmng.client[cl.id] = &cl
 				}
-
 			}
 		}
 
@@ -157,6 +155,6 @@ func (mng *RPCClientMng) rfreshSvr() {
 }
 
 func (mng *RPCClientMng) exit() {
-	rpclog.GetLogger().LogInfo("rpcservice all exit !!!")
+	LogInfo("rpcservice all exit !!!")
 	return
 }

@@ -1,13 +1,20 @@
 syntax = "proto3";
 
 package message;
-
-// The request message containing the user's name.
+//login request 
 message LoginMsgRequest {
   int64 uid  =1;
 }
-
-// The response message containing the greetings
+//login reply
 message LoginMsgReply {
   int32  result  = 1;
+}
+
+//logout request
+message LogOutMsgRequest{
+  int64 uid  = 1;
+}
+//logout reply
+message LogOutMsgReply{
+    string result = 1;
 }
