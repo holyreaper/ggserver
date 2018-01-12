@@ -48,7 +48,6 @@ func main() {
 
 	flag.Parse()
 
-	fmt.Println(len(tmpslice2))
 	gserverType = util.GetServerType(def.SID(*gserverID))
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
