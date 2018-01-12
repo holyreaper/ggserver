@@ -82,41 +82,87 @@ func (cl *RPCClient) exit() {
 type RPCClientMng struct {
 	client  map[SID]*RPCClient
 	rwMutex sync.RWMutex
+	exitCh  chan bool
 }
 
 var grpcmng *RPCClientMng
 
 var gserverID SID
-var gexitCh chan bool
 
 func init() {
 	grpcmng = &RPCClientMng{
 		client:  make(map[SID]*RPCClient, 10),
 		rwMutex: sync.RWMutex{},
+		exitCh:  make(chan bool),
 	}
 	//gexitCh = make(chan bool)
 }
 
 //Start .
-func Start(id SID, exitCh chan bool) {
+func Start(id SID) {
 	gserverID = id
-	gexitCh = exitCh
-	go checkSvr()
+	go grpcmng.checkSvr()
+}
+
+//Stop .
+func Stop() {
+	if grpcmng != nil {
+		close(grpcmng.exitCh)
+	}
+}
+
+//GetCTRPC .
+func GetCTRPC() (cnn ctrpcpt.CTRPCClient, err error) {
+	cl := grpcmng.GetRPCClientFromType(ServerTypeCenter)
+	if cl == nil {
+		return nil, err
+	}
+	cnn, err = cl.GetCTRPC()
+	return
+}
+
+//GetDBRPC .
+func GetDBRPC() (cnn dbrpcpt.DBRPCClient, err error) {
+	cl := grpcmng.GetRPCClientFromType(ServerTypeDB)
+	if cl == nil {
+		return nil, err
+	}
+	cnn, err = cl.GetDBRPC()
+	return
 }
 
 //checkSvr check new server
-func checkSvr() {
+func (mng *RPCClientMng) checkSvr() {
 	tick := time.NewTicker(1 * time.Minute)
 	for {
 		select {
 		case <-tick.C:
-			grpcmng.rfreshSvr()
+			mng.rfreshSvr()
 			//check
-		case <-gexitCh:
-			grpcmng.exit()
+		case <-grpcmng.exitCh:
+			mng.exit()
 			//exit
 		}
 	}
+}
+
+//GetRPCClientFromID  .
+func (mng *RPCClientMng) GetRPCClientFromID(id SID) (cl *RPCClient) {
+	if cl, ok := mng.client[id]; ok {
+		return cl
+	}
+	return nil
+}
+
+//GetRPCClientFromType .
+func (mng *RPCClientMng) GetRPCClientFromType(tp ServerType) (cl *RPCClient) {
+
+	for _, v := range mng.client {
+		if v.tp == tp {
+			return v
+		}
+	}
+	return nil
 }
 
 func (mng *RPCClientMng) rfreshSvr() {
@@ -155,6 +201,6 @@ func (mng *RPCClientMng) rfreshSvr() {
 }
 
 func (mng *RPCClientMng) exit() {
-	LogInfo("rpcservice all exit !!!")
+	LogInfo("rpcclient  all exit !!!")
 	return
 }

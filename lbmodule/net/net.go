@@ -28,6 +28,7 @@ type LBNet struct {
 	waitGroup    *sync.WaitGroup
 	readTimeOut  time.Duration
 	writeTimeOut time.Duration
+	oc           sync.Once
 }
 
 //MAX_SEND .
@@ -53,6 +54,7 @@ func (lbnet *LBNet) Start() {
 			LogFatal("lbnet  have panic ", err)
 		}
 		LogInfo("lbnet end ...")
+		lbnet.Stop()
 	}()
 	for {
 
@@ -78,8 +80,10 @@ func (lbnet *LBNet) Start() {
 
 // Stop deal cnn
 func (lbnet *LBNet) Stop() {
-	close(lbnet.exitCh)
-	lbnet.waitGroup.Wait()
+	lbnet.oc.Do(func() {
+		close(lbnet.exitCh)
+		lbnet.waitGroup.Wait()
+	})
 }
 
 // Init deal cnn

@@ -26,6 +26,7 @@ import (
 	_ "net/http/pprof"
 
 	. "github.com/holyreaper/ggserver/glog"
+	"github.com/holyreaper/ggserver/rpcclient"
 )
 
 const (
@@ -68,19 +69,35 @@ func main() {
 	}()
 	fmt.Println("start .service ")
 	if gserverType != def.ServerTypeNormal {
-		rpcservice.Init(gserverType)
-		go rpcservice.Start(gexitCh)
+
+		rpcservice.Init(def.SID(*gserverID))
+		err := rpcservice.Start()
+		if err != nil {
+			LogFatal("start rpcservice fail err %s", err)
+			return
+		}
+		if gserverType == def.ServerTypeCenter {
+			rpcclient.Start(def.SID(*gserverID))
+		}
 	} else {
 		err := lbservice.Init(def.SID(*gserverID))
 		if err != nil {
 			LogFatal("start lbservice fail err %s", err)
+			return
 		}
-		go lbservice.Start(gexitCh)
+		lbservice.Start()
 	}
 	go client.Start()
 	//go Tick()
 	go Signal()
 	<-gexitCh
+
+}
+
+//Stop ...
+func Stop() {
+	rpcservice.Stop()
+	lbservice.Stop()
 }
 
 //Tick ...
@@ -98,7 +115,7 @@ func Signal() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
 	msg := <-sig
 	LogInfo("server get signal %s", msg)
-
+	Stop()
 }
 
 //Pprof 检查

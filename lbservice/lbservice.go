@@ -29,28 +29,29 @@ func Init(sid SID) (err error) {
 		LogFatal("lbserver Init fail %s ", err)
 		return
 	}
-	err = gLBService.init(info.Address + ":" + strconv.Itoa(info.Port))
+	err = gLBService.init("0.0.0.0:" + strconv.Itoa(info.Port))
 	if err != nil {
 		return
 	}
 	return nil
 }
 
+//Start start service
+func Start() (err error) {
+	go gLBService.lbnet.Start()
+	return
+}
+
+//Stop service
+func Stop() {
+	if gLBService != nil {
+		gLBService.Stop()
+	}
+}
+
 //init 初始化
 func (lb *LBService) init(addr string) error {
 	return lb.lbnet.Init("tcp", addr)
-}
-
-//Start start service
-func Start(exitCh <-chan bool) (err error) {
-	go gLBService.lbnet.Start()
-
-	defer func() {
-		gLBService.Stop()
-	}()
-
-	<-exitCh
-	return
 }
 
 //Stop stop server
