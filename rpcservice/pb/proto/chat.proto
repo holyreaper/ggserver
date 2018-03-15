@@ -20,3 +20,4 @@ message ChatMsgRequest {
 message ChatMsgReply {
   int32  result  = 1;
 }
+

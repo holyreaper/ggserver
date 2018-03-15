@@ -47,8 +47,8 @@ func Start() (err error) {
 		LogFatal("gRPCService GetSingleServerInfo fail %s ", err)
 		return
 	}
-
-	listen, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(info.Port))
+	LogInfo("start rpc service addr %s:%d ", info.Address, info.Port)
+	listen, err := net.Listen("tcp", info.Address+":"+strconv.Itoa(info.Port))
 	if err != nil {
 		fmt.Println("listen fail ....")
 		return

@@ -124,6 +124,7 @@ func GetSingleServerInfo(sid def.SID) (info *consulapi.AgentService, err error) 
 		LogInfo("consul GetSingleServerInfo get %d succ ", sid)
 		return v, nil
 	}
+
 	LogFatal("consul GetSingleServerInfo get %d fail  error %s ", sid, err)
 	return nil, errors.New("consul have no id ")
 }

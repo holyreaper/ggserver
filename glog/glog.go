@@ -2,26 +2,29 @@ package glog
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"runtime"
 
 	"github.com/holyreaper/ggserver/def"
 )
 
 const (
 	//DEBUG debug mode
-	DEBUG = "DEBUG"
+	DEBUG = "[DEBUG]"
 
 	//INFO INFO mode
-	INFO = "INFO"
+	INFO = "[INFO]["
 
 	//WARNING WARNING mode
-	WARNING = "WARNING"
+	WARNING = "[WARNING]["
 
 	//FATAL FATAL mode
-	FATAL = "FATAL"
+	FATAL = "[FATAL]["
 )
 
 //GLog ...
@@ -44,11 +47,11 @@ var gLogger *GLog
 //InitLog ...
 func InitLog(tp def.ServerType, id def.SID) {
 	if def.ServerTypeNormal == tp {
-		gLogger = NewGLog("lobby_" + strconv.Itoa(int(id)))
+		gLogger = NewGLog("lobby_" + strconv.Itoa(int(id)) + "_")
 	} else if def.ServerTypeDB == tp {
-		gLogger = NewGLog("db_" + strconv.Itoa(int(id)))
+		gLogger = NewGLog("db_" + strconv.Itoa(int(id)) + "_")
 	} else if def.ServerTypeCenter == tp {
-		gLogger = NewGLog("center" + strconv.Itoa(int(id)))
+		gLogger = NewGLog("center_" + strconv.Itoa(int(id)) + "_")
 	} else {
 		fmt.Printf("InitLog fatal unknown servertype %d ", tp)
 		gLogger = nil
@@ -79,7 +82,8 @@ func (glog *GLog) getLogger() *log.Logger {
 			log.Fatalf("getLogger filename %s open fail", filename)
 			return nil
 		}
-		glog.Log = log.New(open, "rpcservice", log.Ldate|log.Ltime|log.Llongfile)
+
+		glog.Log = log.New(io.MultiWriter(open, os.Stdout), "rpcservice", log.Ldate|log.Ltime)
 		glog.Openfile = open
 	}
 	return glog.Log
@@ -87,13 +91,20 @@ func (glog *GLog) getLogger() *log.Logger {
 
 //LogInfo info mode
 func LogInfo(format string, v ...interface{}) {
+	file, line := getPath()
+	logfile := fmt.Sprintf("][%s:%d]", file, line)
+	format = logfile + format
 	gLogger.getLogger()
 	gLogger.Log.SetPrefix(INFO)
 	gLogger.Log.Printf(format+"\r\n", v...)
+
 }
 
 //LogDebug DEBUG mode
 func LogDebug(format string, v ...interface{}) {
+	file, line := getPath()
+	logfile := fmt.Sprintf("][%s:%d]", file, line)
+	format = logfile + format
 	gLogger.getLogger()
 	gLogger.Log.SetPrefix(DEBUG)
 	gLogger.Log.Printf(format+"\r\n", v...)
@@ -101,6 +112,9 @@ func LogDebug(format string, v ...interface{}) {
 
 //LogWaring WARNING mode
 func LogWaring(format string, v ...interface{}) {
+	file, line := getPath()
+	logfile := fmt.Sprintf("][%s:%d]", file, line)
+	format = logfile + format
 	gLogger.getLogger()
 	gLogger.Log.SetPrefix(WARNING)
 	gLogger.Log.Printf(format+"\r\n", v...)
@@ -108,7 +122,24 @@ func LogWaring(format string, v ...interface{}) {
 
 //LogFatal FATAL mode
 func LogFatal(format string, v ...interface{}) {
+	file, line := getPath()
+	logfile := fmt.Sprintf("][%s:%d]", file, line)
+	format = logfile + format
 	gLogger.getLogger()
 	gLogger.Log.SetPrefix(FATAL)
 	gLogger.Log.Printf(format+"\r\n", v...)
+}
+func getPath() (file string, line int) {
+	var ok bool
+	_, file, line, ok = runtime.Caller(2)
+	if !ok {
+		file = "???"
+		line = 0
+	}
+	return
+}
+func getFileString() (file string) {
+	file, line := getPath()
+	file = fmt.Sprintf("[%s:%d]", file, line)
+	return
 }

@@ -22,7 +22,6 @@ func (cm *ChatMng) SendMessageToUser(uid UID, tp int32, data proto.Message) (err
 	err = SendMessageToUser(uid, tp, data)
 	if err != nil {
 		//save to off line message
-
 		//need save data
 	}
 	return

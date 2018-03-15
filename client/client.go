@@ -23,7 +23,7 @@ func init() {
 //Start client
 func Start() {
 	fmt.Println("client start ...")
-	client, err := grpc.Dial("192.168.52.177:8090", grpc.WithInsecure())
+	client, err := grpc.Dial("192.168.52.160:8090", grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("client exit error msg ", err)
 		return
@@ -75,7 +75,7 @@ func Start() {
 
 //UserClient client
 func UserClient(ex <-chan bool) {
-	addr, err := net.ResolveTCPAddr("tcp", "192.168.52.117:8090")
+	addr, err := net.ResolveTCPAddr("tcp", "192.168.52.160:8090")
 	if err != nil {
 		fmt.Println("resolve tcp addr error ", err)
 		return

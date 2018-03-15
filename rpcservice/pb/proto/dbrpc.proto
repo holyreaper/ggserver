@@ -8,6 +8,7 @@ service DBRPC {
   rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
  //Login 
   rpc Login (LoginRequest) returns (LoginReply){}
+
 }
 
 
@@ -30,3 +31,12 @@ message LoginReply{
   int32 exp = 5;
   string data   = 6;
 }
+
+//push rpc 
+message PushMessageRequest{
+  int32 serverId = 1;
+}
+message PushMessageReply{
+  int32 type = 1;
+}
+

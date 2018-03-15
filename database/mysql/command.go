@@ -123,7 +123,6 @@ func (cm *Command) Exec(params ...interface{}) (sql.Result, error) {
 		fmt.Println("Mysql Exec unsupport command ", cm.command)
 		return nil, errors.New("unsupport command ")
 	}
-	return nil, nil
 }
 
 //Clear ...

@@ -8,6 +8,8 @@ service CTRPC {
   rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
  //Login 
   rpc Login (LoginRequest) returns (LoginReply){}
+
+  rpc PushStream(PushMessageRequest) returns (stream PushMessageReply){}
 }
 
 
@@ -24,4 +26,13 @@ message LoginRequest{
 }
 message LoginReply{
   string result = 1;
+}
+
+//push rpc 
+message PushMessageRequest{
+  int32 serverId = 1;
+}
+message PushMessageReply{
+  int32 type = 1;
+  
 }

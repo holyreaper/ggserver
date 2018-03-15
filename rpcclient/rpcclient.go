@@ -19,7 +19,20 @@ import (
 	"github.com/holyreaper/ggserver/consul"
 	. "github.com/holyreaper/ggserver/def"
 	. "github.com/holyreaper/ggserver/glog"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+
+	"github.com/holyreaper/ggserver/lbmodule/manager/callbackmanager"
+)
+
+// Stat 服务器状态
+type Stat int32
+
+const (
+	//Ready 正常
+	Ready = iota
+	//NoReady 断开连接
+	NoReady
 )
 
 //RPCClient .
@@ -31,6 +44,7 @@ type RPCClient struct {
 	id     SID
 	data   chan bool
 	client *grpc.ClientConn
+	stat   Stat
 }
 
 //StartClient start rpc client
@@ -39,24 +53,36 @@ func (cl *RPCClient) StartClient() {
 }
 func (cl *RPCClient) cnn() {
 	keepaliveParam := grpc.WithKeepaliveParams(keepalive.ClientParameters{PermitWithoutStream: true})
-	client, err := grpc.Dial("127.0.0.1:8090", grpc.WithInsecure(), keepaliveParam)
+	addr := fmt.Sprintf("%s:%d", cl.addr, cl.port)
+	client, err := grpc.Dial(addr, grpc.WithInsecure(), keepaliveParam)
 	if err != nil {
 		fmt.Println("client exit error msg ", err)
 		return
 	}
+	if cl.tp == def.ServerTypeCenter {
+		LogInfo("rpcclient cnn ct server %s:%d ", cl.addr, cl.port)
+		go cl.rpcStreamClient()
+	}
 	cl.client = client
+	fmt.Printf(" connect to server %s %v ", cl.addr, cl.client)
+
 }
 
 //GetCTRPC .
 func (cl *RPCClient) GetCTRPC() (cnn ctrpcpt.CTRPCClient, err error) {
 	if cl.tp == def.ServerTypeNormal {
-		cnn = ctrpcpt.NewCTRPCClient(cl.client)
-	} else if cl.tp == def.ServerTypeCenter {
 		err = errors.New("have no ctrpc function")
+	} else if cl.tp == def.ServerTypeCenter {
+		if cl.client == nil {
+			err = errors.New("have no ctrpc function nill client ")
+		} else {
+			cnn = ctrpcpt.NewCTRPCClient(cl.client)
+		}
+
 	} else if cl.tp == def.ServerTypeDB {
 		err = errors.New("have no ctrpc function")
 	}
-
+	fmt.Printf(" GetCTRPC to server %s %v %v", cl.addr, cl.client, cnn)
 	return cnn, err
 }
 
@@ -67,9 +93,102 @@ func (cl *RPCClient) GetDBRPC() (cnn dbrpcpt.DBRPCClient, err error) {
 	} else if cl.tp == def.ServerTypeCenter {
 		err = errors.New("have no dbrpc function")
 	} else if cl.tp == def.ServerTypeDB {
-		cnn = dbrpcpt.NewDBRPCClient(cl.client)
+		if cl.client == nil {
+			err = errors.New("have no dbrpc function nill client")
+		} else {
+			cnn = dbrpcpt.NewDBRPCClient(cl.client)
+		}
+
 	}
+
 	return cnn, err
+}
+
+func (cl *RPCClient) rpcStreamClient() {
+	defer func() {
+		if err := recover(); err != nil {
+			LogFatal("rpcStreamClient fail exit err %v ", err)
+		}
+	}()
+	req := ctrpcpt.PushMessageRequest{
+		ServerId: int32(cl.id),
+	}
+	for {
+		select {
+		case <-grpcmng.exitCh:
+			return
+		default:
+
+		}
+		LogInfo("stat %d ", cl.client.GetState())
+		rpc, err := cl.GetCTRPC()
+		if err != nil {
+			LogFatal("rpcStreamClient GetCTRPC cnn fail server id  ", cl.id)
+			return
+		}
+
+		//ctx, _ := context.WithTimeout(context.Background(), 30000*time.Microsecond)
+		LogInfo("start pushStream %v ", cl.addr)
+		client, err := rpc.PushStream(context.Background(), &req)
+		if err != nil {
+			LogFatal("rpcStreamClient pushStream fail err %v ", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		var rsp *ctrpcpt.PushMessageReply
+		for {
+			rsp, err = client.Recv()
+			if err != nil {
+				LogFatal("rpcStreamClient recv data fail err %v ", err)
+				time.Sleep(2 * time.Second)
+				break
+			}
+			callbackmanager.Put(*rsp)
+
+			LogInfo("rpcStreamClient from %d get message type %d  %v", cl.id, rsp.GetType(), cl.client)
+		}
+
+	}
+
+}
+func (cl *RPCClient) sayHello() {
+	if cl.tp == def.ServerTypeCenter {
+		rpc, err := cl.GetCTRPC()
+		if err != nil {
+			LogFatal("sayHello GetCTRPC cnn fail server id  %d error %v", cl.id, err)
+			cl.stat = NoReady
+			return
+		}
+		req := ctrpcpt.KeepAliveRequest{
+			Time: int64(time.Now().Unix()),
+		}
+		_, err = rpc.KeepAlive(context.Background(), &req)
+		if err != nil {
+			LogFatal(" sayHello ctservice %v discnnect ", cl.addr)
+			cl.stat = NoReady
+		} else {
+			cl.stat = Ready
+		}
+
+	} else if cl.tp == def.ServerTypeDB {
+		rpc, err := cl.GetDBRPC()
+		if err != nil {
+			LogFatal("sayHello GetDBRPC cnn fail server id  ", cl.id)
+			cl.stat = NoReady
+			return
+		}
+		req := dbrpcpt.KeepAliveRequest{
+			Time: int64(time.Microsecond),
+		}
+		_, err = rpc.KeepAlive(context.Background(), &req)
+		if err != nil {
+			LogFatal(" sayHello dbservice %v discnnect ", cl.addr)
+			cl.stat = NoReady
+		} else {
+			cl.stat = Ready
+		}
+	}
+
 }
 
 func (cl *RPCClient) exit() {
@@ -78,7 +197,7 @@ func (cl *RPCClient) exit() {
 	}
 }
 
-//RPCClientMng .
+//RPCClientMng d
 type RPCClientMng struct {
 	client  map[SID]*RPCClient
 	rwMutex sync.RWMutex
@@ -133,6 +252,7 @@ func GetDBRPC() (cnn dbrpcpt.DBRPCClient, err error) {
 
 //checkSvr check new server
 func (mng *RPCClientMng) checkSvr() {
+	mng.rfreshSvr()
 	tick := time.NewTicker(1 * time.Minute)
 	for {
 		select {
@@ -141,6 +261,7 @@ func (mng *RPCClientMng) checkSvr() {
 			//check
 		case <-grpcmng.exitCh:
 			mng.exit()
+			return
 			//exit
 		}
 	}
@@ -156,7 +277,6 @@ func (mng *RPCClientMng) GetRPCClientFromID(id SID) (cl *RPCClient) {
 
 //GetRPCClientFromType .
 func (mng *RPCClientMng) GetRPCClientFromType(tp ServerType) (cl *RPCClient) {
-
 	for _, v := range mng.client {
 		if v.tp == tp {
 			return v
@@ -186,8 +306,9 @@ func (mng *RPCClientMng) rfreshSvr() {
 			tp:   util.GetServerType(SID(id)),
 		}
 		if gserverID != cl.id {
-			if _, ok := grpcmng.client[cl.id]; ok {
+			if value, ok := grpcmng.client[cl.id]; ok {
 				//have got yet
+				go value.sayHello()
 			} else {
 				//new service
 				if cl.tp != util.GetServerType(gserverID) {
