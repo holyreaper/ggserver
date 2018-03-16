@@ -34,3 +34,9 @@ func IsTimeOut(err error) bool {
 	}
 	return false
 }
+
+//GetServerType ..
+func GetServerType(id SID) ServerType {
+	s := ServerType(id / SERVERBASEVALUE)
+	return s
+}

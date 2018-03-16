@@ -23,7 +23,7 @@ func init() {
 //NewConsul ...
 func NewConsul() *Consul {
 	consul := &Consul{
-		Address:    "192.168.1.177:8500",
+		Address:    "192.168.1.177:8500", //18.221.174.153
 		Datacenter: "ggserver",
 	}
 	return consul

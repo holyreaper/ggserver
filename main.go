@@ -8,14 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/holyreaper/ggserver/common"
 	"github.com/holyreaper/ggserver/lbmodule/manager/callbackmanager"
 
 	"github.com/holyreaper/ggserver/rpcclient"
 
 	"github.com/holyreaper/ggserver/def"
 	"github.com/holyreaper/ggserver/lbservice"
-
-	"github.com/holyreaper/ggserver/util"
 
 	"fmt"
 
@@ -31,38 +30,29 @@ import (
 	. "github.com/holyreaper/ggserver/glog"
 )
 
-const (
-	port = ":8090"
-	msg  = "helo lhm"
-)
-
-var gserverID *int
-
 var gexitCh = make(chan bool)
-
-var gserverType def.ServerType
 
 func init() {
 
 }
 func main() {
 
-	gserverID = flag.Int("serverid", 0, "serverid ")
-
+	serverid := flag.Int("serverid", 0, "serverid ")
 	flag.Parse()
+	common.SetServerID(def.SID(*serverid))
 
-	gserverType = util.GetServerType(def.SID(*gserverID))
+	//serverType = util.GetServerType(def.SID(*serverid))
 
-	if gserverType < def.ServerTypeNormal || gserverType > def.ServerTypeCenter {
-		fmt.Printf("invalid gserverid %d ", gserverID)
+	if common.GetServerType() < def.ServerTypeNormal || common.GetServerType() > def.ServerTypeCenter {
+		fmt.Printf("invalid gserverid %d ", serverid)
 	}
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	fmt.Printf("server mode : %d\n", *gserverID)
+	fmt.Printf("server mode : %d\n", common.GetServerID())
 
-	InitLog(gserverType, def.SID(*gserverID))
+	InitLog(common.GetServerType(), common.GetServerID())
 
-	LogInfo("server start server mode  %d  ", *gserverID)
+	LogInfo("server start server mode  %d  ", common.GetServerID())
 	//	conf := conf.GetConf()
 	//for _, _ = range conf {
 
@@ -73,29 +63,29 @@ func main() {
 		println("finish ...")
 	}()
 	fmt.Println("start .service ")
-	if gserverType == def.ServerTypeDB || gserverType == def.ServerTypeCenter {
+	if common.GetServerType() == def.ServerTypeDB || common.GetServerType() == def.ServerTypeCenter {
 
-		rpcservice.Init(def.SID(*gserverID))
+		rpcservice.Init(common.GetServerID())
 		err := rpcservice.Start()
 		if err != nil {
 			LogFatal("start rpcservice fail err %s", err)
 			return
 		}
 
-		if gserverType == def.ServerTypeCenter {
+		if common.GetServerType() == def.ServerTypeCenter {
 
-			rpcclient.Start(def.SID(*gserverID))
+			rpcclient.Start(common.GetServerID())
 		}
 
 	} else {
-		err := lbservice.Init(def.SID(*gserverID))
+		err := lbservice.Init(common.GetServerID())
 		if err != nil {
 			LogFatal("start lbservice fail err %s", err)
 			return
 		}
 		lbservice.Start()
 
-		rpcclient.Start(def.SID(*gserverID))
+		rpcclient.Start(common.GetServerID())
 
 		callbackmanager.Start()
 	}
@@ -108,9 +98,9 @@ func main() {
 
 //Stop ...
 func Stop() {
-	if gserverType == def.ServerTypeDB || gserverType == def.ServerTypeCenter {
+	if common.GetServerType() == def.ServerTypeDB || common.GetServerType() == def.ServerTypeCenter {
 		rpcservice.Stop()
-		if gserverType == def.ServerTypeCenter {
+		if common.GetServerType() == def.ServerTypeCenter {
 			rpcclient.Stop()
 		}
 	} else {

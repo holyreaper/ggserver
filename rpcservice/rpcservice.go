@@ -14,7 +14,6 @@ import (
 	"github.com/holyreaper/ggserver/rpcservice/dbrpc"
 	"github.com/holyreaper/ggserver/rpcservice/pb/ctrpc"
 	"github.com/holyreaper/ggserver/rpcservice/pb/dbrpc"
-	"github.com/holyreaper/ggserver/util"
 	"google.golang.org/grpc"
 )
 
@@ -34,7 +33,7 @@ var gRPCService *GGService
 //Init Init Rpcservice
 func Init(id def.SID) {
 	gRPCService = &GGService{id: id,
-		st: util.GetServerType(id),
+		st: def.GetServerType(id),
 	}
 
 }

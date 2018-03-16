@@ -15,6 +15,8 @@ type Command struct {
 	what    string
 	from    string
 	where   string
+	limit   string
+	orderby string
 	//params  []interface{}
 }
 
@@ -88,6 +90,29 @@ func (cm *Command) Where(where string) *Command {
 	return cm
 }
 
+//Limit limit
+func (cm *Command) Limit(offset int, count int) *Command {
+	if cm.command != "select" {
+		return cm
+	}
+	cm.limit = fmt.Sprintf(" limit %d , %d ", offset, count)
+	return cm
+}
+
+//OrderBy .
+func (cm *Command) OrderBy(field string, asc bool) *Command {
+	if cm.command != "select" {
+		return cm
+	}
+	order := "asc"
+	if !asc {
+		order = "desc"
+	}
+	cm.orderby = fmt.Sprintf(" order by %s %s ", field, order)
+
+	return cm
+}
+
 //Params ...
 /*
 func (cm *Command) Params(params ...interface{}) *Command {
@@ -103,7 +128,7 @@ func (cm *Command) Params(params ...interface{}) *Command {
 func (cm *Command) Query(params ...interface{}) (map[int32]map[string]interface{}, error) {
 	switch cm.command {
 	case "select":
-		return Query(cm.command+" "+cm.what+" "+cm.from+" "+cm.table+" "+cm.where, params...)
+		return Query(cm.command+" "+cm.what+" "+cm.from+" "+cm.table+" "+cm.where+cm.limit+cm.orderby, params...)
 	default:
 		fmt.Println("Mysql Query unsupport command ", cm.command)
 		return nil, errors.New(" mysql Query not support command ")
@@ -132,4 +157,6 @@ func (cm *Command) Clear() {
 	cm.what = ""
 	cm.from = ""
 	cm.where = ""
+	cm.limit = ""
+	cm.orderby = ""
 }

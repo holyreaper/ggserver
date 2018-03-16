@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/holyreaper/ggserver/def"
-	"github.com/holyreaper/ggserver/util"
 
 	"github.com/holyreaper/ggserver/rpcservice/pb/dbrpc"
 
@@ -303,7 +302,7 @@ func (mng *RPCClientMng) rfreshSvr() {
 			addr: v.Address,
 			port: int32(v.Port),
 			id:   SID(id),
-			tp:   util.GetServerType(SID(id)),
+			tp:   def.GetServerType(SID(id)),
 		}
 		if gserverID != cl.id {
 			if value, ok := grpcmng.client[cl.id]; ok {
@@ -311,7 +310,7 @@ func (mng *RPCClientMng) rfreshSvr() {
 				go value.sayHello()
 			} else {
 				//new service
-				if cl.tp != util.GetServerType(gserverID) {
+				if cl.tp != def.GetServerType(gserverID) {
 					cl.StartClient()
 					grpcmng.client[cl.id] = &cl
 				}

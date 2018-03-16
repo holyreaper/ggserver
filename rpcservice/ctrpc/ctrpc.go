@@ -40,7 +40,7 @@ func (chat *CTRPC) PushStream(req *ctrpcpt.PushMessageRequest, stream ctrpcpt.CT
 			LogFatal(" rpcservice  push stream got err %v", err)
 			return err
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 		i++
 	}
 	return nil
