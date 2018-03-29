@@ -27,12 +27,5 @@ func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan b
 	rsp.LoginReply = &message.LoginMsgReply{}
 	rsp.LoginReply.Result = 2018
 	charmanager.Login(rpack, spack, exitCh, UID(req.LoginRequest.GetUid()))
-	msg := message.Message{}
-	msg.Command = packet.PKGChat
-	msg.ChatRequest = &message.ChatMsgRequest{}
-	msg.ChatRequest.Fuid = 1001
-	msg.ChatRequest.Tuid = req.LoginRequest.GetUid()
-	msg.ChatRequest.Msg = "hello world "
-	//charmanager.AddMessageToUser(UID(req.LoginRequest.GetUid()), packet.PKGChat, &msg)
 	return
 }

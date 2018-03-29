@@ -17,8 +17,8 @@ func (cm *ChatMng) Login(uid UID) bool {
 	return true
 }
 
-//SendMessageToUser SendMessageToUser
-func (cm *ChatMng) SendMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
+//SendChatMessageToUser SendChatMessageToUser
+func (cm *ChatMng) SendChatMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
 	err = SendMessageToUser(uid, tp, data)
 	if err != nil {
 		//save to off line message

@@ -1,13 +1,19 @@
 syntax = "proto3";
 
 package dbrpcpt;
-
+import "mysql.proto";
 // The loing service definition.
 service DBRPC {
  //KeepAlive rpc 
   rpc KeepAlive(KeepAliveRequest)returns (KeepAliveReply){}
  //Login 
   rpc Login (LoginRequest) returns (LoginReply){}
+  //GetOffLineMsg
+  rpc GetOffLineMsg (GetOffLineMsgRequest) returns (GetOffLineMsgReply){}
+  //SaveOffLineMsg
+  rpc SaveOffLineMsg (SaveOffLineMsgRequest) returns (SaveOffLineMsgReply){}
+  //DelOffLineMsg
+  rpc DelOffLineMsg (DelOffLineMsgRequest) returns (DelOffLineMsgReply){}
 
 }
 
@@ -22,14 +28,35 @@ message KeepAliveReply{
 //login
 message LoginRequest{
   int64 uid =1;
+  int32 serverId=2;
 }
 message LoginReply{
-  int64 uid =1;
-  int64 createtime =2;
-  string name =3;
-  int32 level =4;
-  int32 exp = 5;
-  string data   = 6;
+  pbmysql.userField user = 1;
+}
+
+
+//GetofflineMsg
+message GetOffLineMsgRequest{
+  int64 uid = 1;
+}
+message GetOffLineMsgReply{
+  map<int64,pbmysql.offLineMsgField> info =1;
+}
+//SaveofflineMsg
+message SaveOffLineMsgRequest{
+  repeated pbmysql.offLineMsgField info = 1;
+}
+message SaveOffLineMsgReply{
+  int32 result =1;
+}
+//DelOffLineMsg
+message DelOffLineMsgRequest{
+  int64 uid = 1;
+  int64 id = 2;
+
+}
+message DelOffLineMsgReply{
+  int32 result =1;
 }
 
 //push rpc 

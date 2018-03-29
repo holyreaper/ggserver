@@ -72,7 +72,7 @@ func (lbnet *LBNet) Start() {
 				lbnet.Stop()
 			}
 		}
-		LogInfo("have a Cnn accept start to serve her ")
+		LogInfo("have a Cnn accept start to serve it  ")
 		go lbnet.HandleCnn(cnn)
 	}
 

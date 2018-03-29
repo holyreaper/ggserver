@@ -80,7 +80,9 @@ func (s *GGService) RegisterModule() {
 	} else if s.st == def.ServerTypeDB {
 		dbrpcpt.RegisterDBRPCServer(s.server, &dbrpc.DBRPC{})
 	} else if s.st == def.ServerTypeCenter {
-		ctrpcpt.RegisterCTRPCServer(s.server, &ctrpc.CTRPC{})
+		prpc := &ctrpc.CTRPC{}
+		prpc.Init()
+		ctrpcpt.RegisterCTRPCServer(s.server, prpc)
 	}
 
 }

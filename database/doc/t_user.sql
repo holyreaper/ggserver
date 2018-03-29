@@ -1,5 +1,6 @@
 
-/*set names utf8;
+/*
+set names utf8;
 create TABLE IF NOT EXISTS t_user
 (
     uid                 int unsigned not NULL comment 'uid',
@@ -7,6 +8,8 @@ create TABLE IF NOT EXISTS t_user
     create_time         Datetime not NULL comment 'create_time',
     last_login_time     Datetime not NULL comment 'last_login_time',
     last_logout_time    Datetime not NULL comment 'last_logout_time',
+    vip                 int unsigned not NULL comment 'vip',
+    vip_limit_time      Datetime not NULL comment 'vip out date time ',                  
     exp                 int unsigned not NULL comment 'exp',
     level               int unsigned not NULL comment 'level',
     figure              int unsigned not NULL comment 'figure',

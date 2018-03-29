@@ -1,1 +1,1 @@
-protoc.exe -I ./proto/ ./proto/dbrpc.proto --go_out=./dbrpc/
+protoc.exe -I ./proto/ ./proto/*.proto --go_out=./message/

@@ -8,8 +8,8 @@ import (
 )
 
 //登录相关的数据库操作
-//userField .
-var userField []string
+//UserField .
+var UserField []string
 
 const (
 	//UserTableName .
@@ -37,7 +37,7 @@ const (
 )
 
 func init() {
-	userField = []string{
+	UserField = []string{
 		UserUID,
 		UserUname,
 		UserCreateTime,
@@ -50,7 +50,7 @@ func init() {
 }
 
 //UserSelectSingle .
-func UserSelectSingle(field []string, uid int32) (rst map[string]interface{}, err error) {
+func UserSelectSingle(field []string, uid int64) (rst map[string]interface{}, err error) {
 	if len(field) <= 0 {
 		err = errors.New("empty field")
 		return
@@ -91,8 +91,8 @@ func UserSelectMulity(field []string, where []string, value []interface{}) (rst 
 	return
 }
 
-//UserUpdateSingle
-func UserUpdateSingle(field []string, uid int32, value []interface{}) (err error) {
+//UserUpdateSingle .
+func UserUpdateSingle(field []string, uid int64, value []interface{}) (err error) {
 	if len(field) <= 0 {
 		err = errors.New("empty field")
 		return
@@ -127,7 +127,7 @@ func UserUpdateSingle(field []string, uid int32, value []interface{}) (err error
 func UserInsertSingle(value []interface{}) (err error) {
 
 	command := mysql.Command{}
-	command.InsertInto(UserTableName).Set(userField)
+	command.InsertInto(UserTableName).Set(UserField)
 
 	tmpRst, err := command.Exec(value...)
 	if err != nil {

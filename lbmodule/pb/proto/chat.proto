@@ -3,13 +3,25 @@ syntax = "proto3";
 package message;
 
 // The request message containing the user's name.
+
+message ChatMessage{
+  int64 fuid = 1;
+  string funame =2;
+  int32 ffigure = 3;
+  int32 flevel = 4;
+  int32 fvip = 5;
+  int64 tuid = 6;
+  string msg  = 7;
+}
 message ChatMsgRequest {
-  int64 fuid  =1;
-  int64 tuid  =2;
-  string msg  =3;
+  ChatMessage msg = 1;
 }
 
 // The response message containing the greetings
 message ChatMsgReply {
   int32  result  = 1;
+}
+
+message ChatMsgPush{
+  ChatMessage msg = 1;
 }

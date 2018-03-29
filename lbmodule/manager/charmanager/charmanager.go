@@ -95,6 +95,8 @@ func (cm *OnLineMng) DeleteAll() bool {
 //SendMessageToUser SendMessageToUser
 func (cm *OnLineMng) SendMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
 	fmt.Println("find user   ", uid)
+	cm.wrLock.RLock()
+	defer cm.wrLock.RUnlock()
 	mng := cm.GetUser(uid)
 	if mng != nil {
 		fmt.Println("find user succ  ", uid)
@@ -110,6 +112,8 @@ func (cm *OnLineMng) SendMessageToUser(uid UID, tp int32, data proto.Message) (e
 //AddMessageToUser AddMessageToUser
 func (cm *OnLineMng) AddMessageToUser(uid UID, tp int32, data proto.Message) (err error) {
 	fmt.Println("find user   ", uid)
+	cm.wrLock.RLock()
+	defer cm.wrLock.RUnlock()
 	mng := cm.GetUser(uid)
 	if mng != nil {
 		fmt.Println("find user succ  ", uid)
@@ -124,8 +128,6 @@ func (cm *OnLineMng) AddMessageToUser(uid UID, tp int32, data proto.Message) (er
 
 //GetUser get user
 func (cm *OnLineMng) GetUser(uid UID) interface{} {
-	cm.wrLock.RLock()
-	defer cm.wrLock.RUnlock()
 	if value, ok := cm.manager[uid]; ok {
 		return value
 	}

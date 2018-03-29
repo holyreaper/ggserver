@@ -7,7 +7,7 @@ import (
 	. "github.com/holyreaper/ggserver/glog"
 )
 
-var offLineMsgField []string
+var OffLineMsgField []string
 
 const (
 	//OffTableName  .
@@ -32,7 +32,7 @@ const (
 )
 
 func init() {
-	offLineMsgField = []string{
+	OffLineMsgField = []string{
 		OfflineMsgID,
 		OfflineMsgUID,
 		OfflineMsgSendTime,
@@ -85,11 +85,7 @@ func OffLineMsgSelectMulity(field []string, where []string, value []interface{})
 }
 
 //OffLineMsgDelete .
-func OffLineMsgDelete(field []string, where []string, value []interface{}) (err error) {
-	if len(field) <= 0 {
-		err = errors.New("empty field")
-		return
-	}
+func OffLineMsgDelete(where []string, value []interface{}) (err error) {
 
 	command := mysql.Command{}
 	command.Delete(UserTableName)
@@ -116,7 +112,7 @@ func OffLineMsgDelete(field []string, where []string, value []interface{}) (err 
 func OffLineMsgInsert(value []interface{}) (err error) {
 	command := mysql.Command{}
 	command.InsertInto(UserTableName)
-	command.Set(offLineMsgField)
+	command.Set(OffLineMsgField)
 	tmpRst, err := command.Exec(value...)
 	if err != nil {
 		LogFatal("mysql OffLineMsgDelete Exec error %v ", err)

@@ -12,6 +12,12 @@ It has these top-level messages:
 	KeepAliveReply
 	LoginRequest
 	LoginReply
+	GetOffLineMsgRequest
+	GetOffLineMsgReply
+	SaveOffLineMsgRequest
+	SaveOffLineMsgReply
+	DelOffLineMsgRequest
+	DelOffLineMsgReply
 	PushMessageRequest
 	PushMessageReply
 */
@@ -20,6 +26,7 @@ package dbrpcpt
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import pbmysql "github.com/holyreaper/ggserver/rpcservice/pb/mysql"
 
 import (
 	context "golang.org/x/net/context"
@@ -72,7 +79,8 @@ func (m *KeepAliveReply) GetResult() int32 {
 
 // login
 type LoginRequest struct {
-	Uid int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
+	Uid      int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
+	ServerId int32 `protobuf:"varint,2,opt,name=serverId" json:"serverId,omitempty"`
 }
 
 func (m *LoginRequest) Reset()                    { *m = LoginRequest{} }
@@ -87,13 +95,15 @@ func (m *LoginRequest) GetUid() int64 {
 	return 0
 }
 
+func (m *LoginRequest) GetServerId() int32 {
+	if m != nil {
+		return m.ServerId
+	}
+	return 0
+}
+
 type LoginReply struct {
-	Uid        int64  `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
-	Createtime int64  `protobuf:"varint,2,opt,name=createtime" json:"createtime,omitempty"`
-	Name       string `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Level      int32  `protobuf:"varint,4,opt,name=level" json:"level,omitempty"`
-	Exp        int32  `protobuf:"varint,5,opt,name=exp" json:"exp,omitempty"`
-	Data       string `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+	User *pbmysql.UserField `protobuf:"bytes,1,opt,name=user" json:"user,omitempty"`
 }
 
 func (m *LoginReply) Reset()                    { *m = LoginReply{} }
@@ -101,46 +111,118 @@ func (m *LoginReply) String() string            { return proto.CompactTextString
 func (*LoginReply) ProtoMessage()               {}
 func (*LoginReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
-func (m *LoginReply) GetUid() int64 {
+func (m *LoginReply) GetUser() *pbmysql.UserField {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+// GetofflineMsg
+type GetOffLineMsgRequest struct {
+	Uid int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
+}
+
+func (m *GetOffLineMsgRequest) Reset()                    { *m = GetOffLineMsgRequest{} }
+func (m *GetOffLineMsgRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetOffLineMsgRequest) ProtoMessage()               {}
+func (*GetOffLineMsgRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *GetOffLineMsgRequest) GetUid() int64 {
 	if m != nil {
 		return m.Uid
 	}
 	return 0
 }
 
-func (m *LoginReply) GetCreatetime() int64 {
+type GetOffLineMsgReply struct {
+	Info map[int64]*pbmysql.OffLineMsgField `protobuf:"bytes,1,rep,name=info" json:"info,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *GetOffLineMsgReply) Reset()                    { *m = GetOffLineMsgReply{} }
+func (m *GetOffLineMsgReply) String() string            { return proto.CompactTextString(m) }
+func (*GetOffLineMsgReply) ProtoMessage()               {}
+func (*GetOffLineMsgReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *GetOffLineMsgReply) GetInfo() map[int64]*pbmysql.OffLineMsgField {
 	if m != nil {
-		return m.Createtime
+		return m.Info
+	}
+	return nil
+}
+
+// SaveofflineMsg
+type SaveOffLineMsgRequest struct {
+	Info []*pbmysql.OffLineMsgField `protobuf:"bytes,1,rep,name=info" json:"info,omitempty"`
+}
+
+func (m *SaveOffLineMsgRequest) Reset()                    { *m = SaveOffLineMsgRequest{} }
+func (m *SaveOffLineMsgRequest) String() string            { return proto.CompactTextString(m) }
+func (*SaveOffLineMsgRequest) ProtoMessage()               {}
+func (*SaveOffLineMsgRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *SaveOffLineMsgRequest) GetInfo() []*pbmysql.OffLineMsgField {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+type SaveOffLineMsgReply struct {
+	Result int32 `protobuf:"varint,1,opt,name=result" json:"result,omitempty"`
+}
+
+func (m *SaveOffLineMsgReply) Reset()                    { *m = SaveOffLineMsgReply{} }
+func (m *SaveOffLineMsgReply) String() string            { return proto.CompactTextString(m) }
+func (*SaveOffLineMsgReply) ProtoMessage()               {}
+func (*SaveOffLineMsgReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *SaveOffLineMsgReply) GetResult() int32 {
+	if m != nil {
+		return m.Result
 	}
 	return 0
 }
 
-func (m *LoginReply) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
+// DelOffLineMsg
+type DelOffLineMsgRequest struct {
+	Uid int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
+	Id  int64 `protobuf:"varint,2,opt,name=id" json:"id,omitempty"`
 }
 
-func (m *LoginReply) GetLevel() int32 {
+func (m *DelOffLineMsgRequest) Reset()                    { *m = DelOffLineMsgRequest{} }
+func (m *DelOffLineMsgRequest) String() string            { return proto.CompactTextString(m) }
+func (*DelOffLineMsgRequest) ProtoMessage()               {}
+func (*DelOffLineMsgRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *DelOffLineMsgRequest) GetUid() int64 {
 	if m != nil {
-		return m.Level
+		return m.Uid
 	}
 	return 0
 }
 
-func (m *LoginReply) GetExp() int32 {
+func (m *DelOffLineMsgRequest) GetId() int64 {
 	if m != nil {
-		return m.Exp
+		return m.Id
 	}
 	return 0
 }
 
-func (m *LoginReply) GetData() string {
+type DelOffLineMsgReply struct {
+	Result int32 `protobuf:"varint,1,opt,name=result" json:"result,omitempty"`
+}
+
+func (m *DelOffLineMsgReply) Reset()                    { *m = DelOffLineMsgReply{} }
+func (m *DelOffLineMsgReply) String() string            { return proto.CompactTextString(m) }
+func (*DelOffLineMsgReply) ProtoMessage()               {}
+func (*DelOffLineMsgReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *DelOffLineMsgReply) GetResult() int32 {
 	if m != nil {
-		return m.Data
+		return m.Result
 	}
-	return ""
+	return 0
 }
 
 // push rpc
@@ -151,7 +233,7 @@ type PushMessageRequest struct {
 func (m *PushMessageRequest) Reset()                    { *m = PushMessageRequest{} }
 func (m *PushMessageRequest) String() string            { return proto.CompactTextString(m) }
 func (*PushMessageRequest) ProtoMessage()               {}
-func (*PushMessageRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*PushMessageRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *PushMessageRequest) GetServerId() int32 {
 	if m != nil {
@@ -167,7 +249,7 @@ type PushMessageReply struct {
 func (m *PushMessageReply) Reset()                    { *m = PushMessageReply{} }
 func (m *PushMessageReply) String() string            { return proto.CompactTextString(m) }
 func (*PushMessageReply) ProtoMessage()               {}
-func (*PushMessageReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*PushMessageReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *PushMessageReply) GetType() int32 {
 	if m != nil {
@@ -181,6 +263,12 @@ func init() {
 	proto.RegisterType((*KeepAliveReply)(nil), "dbrpcpt.KeepAliveReply")
 	proto.RegisterType((*LoginRequest)(nil), "dbrpcpt.LoginRequest")
 	proto.RegisterType((*LoginReply)(nil), "dbrpcpt.LoginReply")
+	proto.RegisterType((*GetOffLineMsgRequest)(nil), "dbrpcpt.GetOffLineMsgRequest")
+	proto.RegisterType((*GetOffLineMsgReply)(nil), "dbrpcpt.GetOffLineMsgReply")
+	proto.RegisterType((*SaveOffLineMsgRequest)(nil), "dbrpcpt.SaveOffLineMsgRequest")
+	proto.RegisterType((*SaveOffLineMsgReply)(nil), "dbrpcpt.SaveOffLineMsgReply")
+	proto.RegisterType((*DelOffLineMsgRequest)(nil), "dbrpcpt.DelOffLineMsgRequest")
+	proto.RegisterType((*DelOffLineMsgReply)(nil), "dbrpcpt.DelOffLineMsgReply")
 	proto.RegisterType((*PushMessageRequest)(nil), "dbrpcpt.PushMessageRequest")
 	proto.RegisterType((*PushMessageReply)(nil), "dbrpcpt.PushMessageReply")
 }
@@ -200,6 +288,12 @@ type DBRPCClient interface {
 	KeepAlive(ctx context.Context, in *KeepAliveRequest, opts ...grpc.CallOption) (*KeepAliveReply, error)
 	// Login
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
+	// GetOffLineMsg
+	GetOffLineMsg(ctx context.Context, in *GetOffLineMsgRequest, opts ...grpc.CallOption) (*GetOffLineMsgReply, error)
+	// SaveOffLineMsg
+	SaveOffLineMsg(ctx context.Context, in *SaveOffLineMsgRequest, opts ...grpc.CallOption) (*SaveOffLineMsgReply, error)
+	// DelOffLineMsg
+	DelOffLineMsg(ctx context.Context, in *DelOffLineMsgRequest, opts ...grpc.CallOption) (*DelOffLineMsgReply, error)
 }
 
 type dBRPCClient struct {
@@ -228,6 +322,33 @@ func (c *dBRPCClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.
 	return out, nil
 }
 
+func (c *dBRPCClient) GetOffLineMsg(ctx context.Context, in *GetOffLineMsgRequest, opts ...grpc.CallOption) (*GetOffLineMsgReply, error) {
+	out := new(GetOffLineMsgReply)
+	err := grpc.Invoke(ctx, "/dbrpcpt.DBRPC/GetOffLineMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dBRPCClient) SaveOffLineMsg(ctx context.Context, in *SaveOffLineMsgRequest, opts ...grpc.CallOption) (*SaveOffLineMsgReply, error) {
+	out := new(SaveOffLineMsgReply)
+	err := grpc.Invoke(ctx, "/dbrpcpt.DBRPC/SaveOffLineMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dBRPCClient) DelOffLineMsg(ctx context.Context, in *DelOffLineMsgRequest, opts ...grpc.CallOption) (*DelOffLineMsgReply, error) {
+	out := new(DelOffLineMsgReply)
+	err := grpc.Invoke(ctx, "/dbrpcpt.DBRPC/DelOffLineMsg", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for DBRPC service
 
 type DBRPCServer interface {
@@ -235,6 +356,12 @@ type DBRPCServer interface {
 	KeepAlive(context.Context, *KeepAliveRequest) (*KeepAliveReply, error)
 	// Login
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
+	// GetOffLineMsg
+	GetOffLineMsg(context.Context, *GetOffLineMsgRequest) (*GetOffLineMsgReply, error)
+	// SaveOffLineMsg
+	SaveOffLineMsg(context.Context, *SaveOffLineMsgRequest) (*SaveOffLineMsgReply, error)
+	// DelOffLineMsg
+	DelOffLineMsg(context.Context, *DelOffLineMsgRequest) (*DelOffLineMsgReply, error)
 }
 
 func RegisterDBRPCServer(s *grpc.Server, srv DBRPCServer) {
@@ -277,6 +404,60 @@ func _DBRPC_Login_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DBRPC_GetOffLineMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOffLineMsgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DBRPCServer).GetOffLineMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dbrpcpt.DBRPC/GetOffLineMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DBRPCServer).GetOffLineMsg(ctx, req.(*GetOffLineMsgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DBRPC_SaveOffLineMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveOffLineMsgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DBRPCServer).SaveOffLineMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dbrpcpt.DBRPC/SaveOffLineMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DBRPCServer).SaveOffLineMsg(ctx, req.(*SaveOffLineMsgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DBRPC_DelOffLineMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DelOffLineMsgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DBRPCServer).DelOffLineMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dbrpcpt.DBRPC/DelOffLineMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DBRPCServer).DelOffLineMsg(ctx, req.(*DelOffLineMsgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _DBRPC_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "dbrpcpt.DBRPC",
 	HandlerType: (*DBRPCServer)(nil),
@@ -289,6 +470,18 @@ var _DBRPC_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Login",
 			Handler:    _DBRPC_Login_Handler,
 		},
+		{
+			MethodName: "GetOffLineMsg",
+			Handler:    _DBRPC_GetOffLineMsg_Handler,
+		},
+		{
+			MethodName: "SaveOffLineMsg",
+			Handler:    _DBRPC_SaveOffLineMsg_Handler,
+		},
+		{
+			MethodName: "DelOffLineMsg",
+			Handler:    _DBRPC_DelOffLineMsg_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "dbrpc.proto",
@@ -297,24 +490,35 @@ var _DBRPC_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("dbrpc.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 298 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x91, 0xcf, 0x4a, 0xc3, 0x40,
-	0x10, 0xc6, 0x8d, 0x69, 0xa2, 0x1d, 0x45, 0xca, 0xfa, 0x2f, 0xe6, 0x20, 0x61, 0x0f, 0x92, 0x53,
-	0x10, 0xc5, 0x07, 0xa8, 0x7a, 0x11, 0x15, 0x4a, 0xde, 0x20, 0x6d, 0x86, 0x1a, 0xd8, 0x36, 0xeb,
-	0xee, 0x26, 0x98, 0xa3, 0x2f, 0xe0, 0x33, 0xcb, 0x4e, 0xd7, 0x10, 0xab, 0xb7, 0x6f, 0x66, 0xbf,
-	0xf9, 0x98, 0xf9, 0x2d, 0x1c, 0x94, 0x73, 0x25, 0x17, 0x99, 0x54, 0xb5, 0xa9, 0xd9, 0x1e, 0x15,
-	0xd2, 0xf0, 0x2b, 0x98, 0x3c, 0x23, 0xca, 0xa9, 0xa8, 0x5a, 0xcc, 0xf1, 0xbd, 0x41, 0x6d, 0x18,
-	0x83, 0x91, 0xa9, 0x56, 0x18, 0x79, 0x89, 0x97, 0xfa, 0x39, 0x69, 0x9e, 0xc2, 0xd1, 0xc0, 0x27,
-	0x45, 0xc7, 0xce, 0x20, 0x54, 0xa8, 0x1b, 0x61, 0xc8, 0x17, 0xe4, 0xae, 0xe2, 0x09, 0x1c, 0xbe,
-	0xd4, 0xcb, 0x6a, 0xfd, 0x93, 0x36, 0x01, 0xbf, 0xa9, 0x4a, 0x17, 0x66, 0x25, 0xff, 0xf2, 0x00,
-	0x9c, 0xc5, 0x06, 0xfd, 0x31, 0xb0, 0x4b, 0x80, 0x85, 0xc2, 0xc2, 0x20, 0xad, 0xb1, 0x4b, 0x0f,
-	0x83, 0x8e, 0x5d, 0x70, 0x5d, 0xac, 0x30, 0xf2, 0x13, 0x2f, 0x1d, 0xe7, 0xa4, 0xd9, 0x09, 0x04,
-	0x02, 0x5b, 0x14, 0xd1, 0x88, 0xb6, 0xd9, 0x14, 0x36, 0x1b, 0x3f, 0x64, 0x14, 0x50, 0xcf, 0x4a,
-	0x3b, 0x5b, 0x16, 0xa6, 0x88, 0xc2, 0xcd, 0xac, 0xd5, 0xfc, 0x1a, 0xd8, 0xac, 0xd1, 0x6f, 0xaf,
-	0xa8, 0x75, 0xb1, 0xec, 0x31, 0xc4, 0xb0, 0xaf, 0x51, 0xb5, 0xa8, 0x9e, 0x4a, 0x77, 0x62, 0x5f,
-	0x5b, 0x6c, 0xbf, 0x26, 0xec, 0x1d, 0x16, 0x5b, 0x27, 0xd1, 0x79, 0x49, 0xdf, 0x7c, 0x7a, 0x10,
-	0x3c, 0xde, 0xe7, 0xb3, 0x07, 0x36, 0x85, 0x71, 0x0f, 0x90, 0x5d, 0x64, 0x8e, 0x7f, 0xb6, 0x0d,
-	0x3f, 0x3e, 0xff, 0xef, 0x49, 0x8a, 0x8e, 0xef, 0xb0, 0x3b, 0x08, 0x08, 0x1b, 0x3b, 0xed, 0x3d,
-	0x43, 0xd2, 0xf1, 0xf1, 0x76, 0x9b, 0xc6, 0xe6, 0x21, 0x7d, 0xf9, 0xed, 0x77, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0xa9, 0x7d, 0x75, 0x16, 0x01, 0x02, 0x00, 0x00,
+	// 471 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xed, 0x6e, 0xd3, 0x40,
+	0x10, 0x8c, 0x9d, 0xa4, 0xd0, 0x35, 0x44, 0xd1, 0xb6, 0x85, 0x60, 0x3e, 0x54, 0x9d, 0x44, 0x94,
+	0x1f, 0xc5, 0x42, 0x01, 0xa4, 0x82, 0xf8, 0x53, 0x68, 0x41, 0x15, 0x8d, 0x08, 0xe6, 0x09, 0x12,
+	0xbc, 0x09, 0xa7, 0x5e, 0xed, 0xab, 0xcf, 0x8e, 0xe4, 0xd7, 0xe1, 0x0d, 0x79, 0x03, 0xe4, 0xb3,
+	0x7b, 0xb2, 0x9d, 0x0f, 0xf1, 0xef, 0x6e, 0x6f, 0x66, 0x76, 0xd7, 0x33, 0x32, 0x38, 0xc1, 0x3c,
+	0x96, 0xbf, 0x3c, 0x19, 0x47, 0x49, 0x84, 0xf7, 0xf4, 0x45, 0x26, 0xae, 0x73, 0x93, 0xa9, 0x5b,
+	0x51, 0x54, 0xd9, 0x10, 0xfa, 0xdf, 0x88, 0xe4, 0x99, 0xe0, 0x2b, 0xf2, 0xe9, 0x36, 0x25, 0x95,
+	0x20, 0x42, 0x27, 0xe1, 0x37, 0x34, 0xb0, 0x8e, 0xad, 0x51, 0xdb, 0xd7, 0x67, 0x36, 0x82, 0x5e,
+	0x05, 0x27, 0x45, 0x86, 0x8f, 0x60, 0x2f, 0x26, 0x95, 0x8a, 0x44, 0xe3, 0xba, 0x7e, 0x79, 0x63,
+	0x1f, 0xe1, 0xc1, 0x55, 0xb4, 0xe4, 0xe1, 0x9d, 0x5a, 0x1f, 0xda, 0x29, 0x0f, 0x4a, 0xb1, 0xfc,
+	0x88, 0x2e, 0xdc, 0x57, 0x14, 0xaf, 0x28, 0xbe, 0x0c, 0x06, 0xb6, 0xe6, 0x9a, 0x3b, 0x7b, 0x0b,
+	0x50, 0xb2, 0xf3, 0x1e, 0x43, 0xe8, 0xa4, 0x8a, 0x62, 0x4d, 0x76, 0xc6, 0xe8, 0xc9, 0x79, 0x31,
+	0x7b, 0x5e, 0xfc, 0xc2, 0x49, 0x04, 0xbe, 0x7e, 0x67, 0x23, 0x38, 0xfc, 0x4a, 0xc9, 0xf7, 0xc5,
+	0xe2, 0x8a, 0x87, 0x34, 0x51, 0xcb, 0xad, 0xbd, 0xd9, 0x1f, 0x0b, 0xb0, 0x01, 0xcd, 0x1b, 0xbd,
+	0x87, 0x0e, 0x0f, 0x17, 0xd1, 0xc0, 0x3a, 0x6e, 0x8f, 0x9c, 0xf1, 0x4b, 0xaf, 0xfc, 0x56, 0xde,
+	0x3a, 0xd4, 0xbb, 0x0c, 0x17, 0xd1, 0x45, 0x98, 0xc4, 0x99, 0xaf, 0x29, 0xee, 0x0f, 0xd8, 0x37,
+	0xa5, 0xbc, 0xe1, 0x35, 0x65, 0x77, 0x0d, 0xaf, 0x29, 0x43, 0x0f, 0xba, 0xab, 0x99, 0x48, 0x49,
+	0x6f, 0xea, 0x8c, 0x07, 0x66, 0x87, 0xc8, 0xe8, 0x16, 0x9b, 0x14, 0xb0, 0x0f, 0xf6, 0xa9, 0xc5,
+	0x2e, 0xe0, 0xe8, 0xe7, 0x6c, 0x45, 0xeb, 0xfb, 0x9c, 0xd4, 0xc6, 0xdc, 0xae, 0xa5, 0x51, 0xec,
+	0x15, 0x1c, 0x34, 0x65, 0x76, 0x19, 0x77, 0x0a, 0x87, 0xe7, 0x24, 0xfe, 0xe3, 0x23, 0x62, 0x0f,
+	0x6c, 0x5e, 0x58, 0xd7, 0xf6, 0x6d, 0x1e, 0xb0, 0x13, 0xc0, 0x06, 0x73, 0x57, 0x9f, 0xd7, 0x80,
+	0xd3, 0x54, 0xfd, 0x9e, 0x90, 0x52, 0xb3, 0xa5, 0x09, 0x5d, 0x35, 0x14, 0x56, 0x23, 0x14, 0x43,
+	0xe8, 0xd7, 0x18, 0xb9, 0x7a, 0x1e, 0xd2, 0x4c, 0x52, 0x89, 0xd5, 0xe7, 0xf1, 0x5f, 0x1b, 0xba,
+	0xe7, 0x9f, 0xfc, 0xe9, 0x67, 0x3c, 0x83, 0x7d, 0x13, 0x57, 0x7c, 0x62, 0xec, 0x6c, 0x46, 0xdd,
+	0x7d, 0xbc, 0xe9, 0x49, 0x8a, 0x8c, 0xb5, 0xf0, 0x1d, 0x74, 0x75, 0x12, 0xf1, 0xc8, 0x60, 0xaa,
+	0xb9, 0x76, 0x0f, 0x9a, 0xe5, 0x82, 0x36, 0x81, 0x87, 0xb5, 0xd0, 0xe0, 0xf3, 0x6d, 0x61, 0x2a,
+	0x64, 0x9e, 0xee, 0xc8, 0x1a, 0x6b, 0xe1, 0x14, 0x7a, 0x75, 0x0f, 0xf1, 0x85, 0x21, 0x6c, 0xcc,
+	0x88, 0xfb, 0x6c, 0xeb, 0xbb, 0x19, 0xb0, 0x66, 0x56, 0x65, 0xc0, 0x4d, 0xf6, 0x57, 0x06, 0x5c,
+	0xf7, 0x98, 0xb5, 0xe6, 0x7b, 0xfa, 0x3f, 0xf2, 0xe6, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x30,
+	0x65, 0x0e, 0x10, 0x6c, 0x04, 0x00, 0x00,
 }

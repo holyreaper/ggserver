@@ -32,6 +32,8 @@ const (
 
 	//PKGChat 聊天
 	PKGChat
+	//PKGChatPush 聊天推送
+	PKGChatPush
 )
 
 const (

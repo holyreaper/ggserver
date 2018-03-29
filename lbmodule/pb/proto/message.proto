@@ -19,4 +19,7 @@ message Message{
 
     LogOutMsgReply  logoutReply = 8;
 
+    //服务器推送消息
+    ChatMsgPush     chatmsgPush = 10001;
+
 }

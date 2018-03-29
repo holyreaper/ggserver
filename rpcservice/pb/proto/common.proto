@@ -1,0 +1,12 @@
+syntax = "proto3";
+package pbcommon; 
+
+message ChatMessage{
+    int64 fuid = 1;
+    string funame =2;
+    int32 ffigure = 3;
+    int32 flevel = 4;
+    int32 fvip = 5;
+    int64 tuid = 6;
+    string msg  = 7;
+}
