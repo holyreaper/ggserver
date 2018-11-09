@@ -20,7 +20,6 @@ func init() {
 
 //Login Login
 func Login(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, req message.Message) (rsp message.Message) {
-
 	fmt.Printf("user %d Login success !!", req.LoginRequest.GetUid())
 	LogInfo("user %d Login success !!", req.LoginRequest.GetUid())
 	//rsp.Pack(packet.PKGLogin, &message.LoginMsgReply{Result: 2018})

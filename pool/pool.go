@@ -3,14 +3,10 @@ package pool
 import (
 	"container/list"
 	"sync"
-
 	"github.com/holyreaper/ggserver/glog"
 )
-
-/*
-	IPool
+/** 
 	主要提供连接池的操作
-
 */
 //IPoll interface
 type IPool interface {
@@ -24,8 +20,8 @@ type IPool interface {
 	Release()
 }
 
-//poolparamer 参数
-type poolparamer struct {
+//Param 参数
+type Param struct {
 	//最大数量
 	maxSize uint
 	//最小数量
@@ -47,7 +43,7 @@ type poolparamer struct {
 
 //Pool 模板
 type Pool struct {
-	poolparamer
+	Param
 }
 
 //Init 初始化
