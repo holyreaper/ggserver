@@ -1,7 +1,6 @@
 package lbnet
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -10,17 +9,17 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	. "github.com/holyreaper/ggserver/glog"
-
 	"github.com/holyreaper/ggserver/def"
+	. "github.com/holyreaper/ggserver/glog"
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
-	_ "github.com/holyreaper/ggserver/lbmodule/logic/chat"
-	_ "github.com/holyreaper/ggserver/lbmodule/logic/user"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
 	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 	"github.com/holyreaper/ggserver/util/convert"
 )
 
+/* ----------------------------------------------------------------
+	服务器处理客户端的连接
+---------------------------------------------------------------- */
 //LBNet net
 type LBNet struct {
 	listen       *net.TCPListener
@@ -66,16 +65,6 @@ func (client *ClientCnn) Send(pack packet.Packet) error {
 		}
 	}()
 	return nil
-}
-
-//Receive receive data
-func (client *ClientCnn) Receive() (packet.Packet, error) {
-	pack, ok := <-client.receivePacket
-	if !ok {
-		LogFatal("client Receive %s fail chan has been closed", client.addr)
-		return packet.Packet{}, errors.New("chan has been closed")
-	}
-	return pack, nil
 }
 
 //HandlePacket .
@@ -185,9 +174,14 @@ func (client *ClientCnn) HandleReceive(exitCh chan bool) {
 
 	)
 	for {
-		if client.IsClosed() {
-			LogInfo("client handlereceive %s exit", client.addr)
+		select {
+		case <-exitCh:
+			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
 			return
+		case <-client.exitCh:
+			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
+			return
+		default:
 		}
 		client.SetReadDeadline(time.Now().Add(30 * time.Second))
 		if cLen < 4 {
@@ -264,16 +258,6 @@ func (client *ClientCnn) SetReadDeadline(t time.Time) error {
 	return client.cnn.SetReadDeadline(t)
 }
 
-//IsClosed addr
-func (client *ClientCnn) IsClosed() bool {
-	select {
-	case <-client.exitCh:
-		return false
-	default:
-	}
-	return true
-}
-
 const (
 	//MaxSend .
 	MaxSend int32 = 100
@@ -319,6 +303,9 @@ func (lbnet *LBNet) Start() {
 				lbnet.Stop()
 			}
 		}
+
+		cnn.SetKeepAlivePeriod(10)
+		cnn.SetKeepAlive(true)
 		LogInfo("have a Cnn accept start to serve it  ")
 		go lbnet.HandleCnn(cnn)
 	}
@@ -401,4 +388,5 @@ func (lbnet *LBNet) HandleSend(client *ClientCnn) {
 		}
 		lbnet.waitGroup.Done()
 	}()
+	client.HandleSend(lbnet.exitCh)
 }
