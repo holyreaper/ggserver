@@ -1,6 +1,9 @@
 package def
 
-import "net"
+import (
+	"net"
+	"syscall"
+)
 
 // ServerType 服务器类型
 type ServerType int32
@@ -29,8 +32,20 @@ const (
 
 //IsTimeOut check net err
 func IsTimeOut(err error) bool {
-	if NetErr, ok := err.(*net.OpError); ok && NetErr.Timeout() {
+	if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
 		return true
+	}
+	return false
+}
+
+//IsFdBlock check net block err
+func IsFdBlock(err error) bool {
+	if operr, ok := err.(*net.OpError); ok {
+		if numerr, ok2 := operr.Err.(syscall.Errno); ok2 {
+			if numerr == syscall.EAGAIN || numerr == syscall.EWOULDBLOCK || numerr == syscall.EINTR {
+				return true
+			}
+		}
 	}
 	return false
 }

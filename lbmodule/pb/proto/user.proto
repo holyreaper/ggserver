@@ -2,19 +2,42 @@ syntax = "proto3";
 
 package message;
 //login request 
-message LoginMsgRequest {
+message LoginRequest {
   int64 uid  =1;
 }
 //login reply
-message LoginMsgReply {
+message LoginReply {
   int32  result  = 1;
+  int64  timestamp = 2;
 }
 
 //logout request
-message LogOutMsgRequest{
+message LogOutRequest{
   int64 uid  = 1;
 }
 //logout reply
-message LogOutMsgReply{
+message LogOutReply{
     string result = 1;
+}
+//register request 
+message RegisterRequest{
+    string uname = 1;
+    string email = 2;
+    string password = 3;
+    int32  gender  = 4;
+}
+
+//register reply
+message RegisterReply{
+  string uname = 1;
+  int32  ret  = 2;
+}
+
+//keepAlive request 
+message KeepAliveRequest{
+    string msg = 1;
+}
+
+//register reply
+message KeepAliveReply{
 }

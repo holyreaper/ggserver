@@ -12,7 +12,7 @@ import (
 
 //LBService ...
 type LBService struct {
-	lbnet *lbnet.LBNet
+	lbnet lbnet.Server
 	id    SID
 }
 
@@ -51,7 +51,7 @@ func Stop() {
 
 //init 初始化
 func (lb *LBService) init(addr string) error {
-	return lb.lbnet.Init("tcp", addr)
+	return lb.lbnet.Init(addr)
 }
 
 //Stop stop server

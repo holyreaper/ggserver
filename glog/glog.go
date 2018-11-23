@@ -1,6 +1,7 @@
 package glog
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -45,7 +46,7 @@ func init() {
 var gLogger *GLog
 
 //InitLog ...
-func InitLog(tp def.ServerType, id def.SID) {
+func InitLog(tp def.ServerType, id def.SID) (err error) {
 	if def.ServerTypeNormal == tp {
 		gLogger = NewGLog("lobby_" + strconv.Itoa(int(id)) + "_")
 	} else if def.ServerTypeDB == tp {
@@ -55,7 +56,9 @@ func InitLog(tp def.ServerType, id def.SID) {
 	} else {
 		fmt.Printf("InitLog fatal unknown servertype %d ", tp)
 		gLogger = nil
+		err = errors.New("invalid tp")
 	}
+	return err
 }
 
 //NewGLog new glog
@@ -83,7 +86,7 @@ func (glog *GLog) getLogger() *log.Logger {
 			return nil
 		}
 
-		glog.Log = log.New(io.MultiWriter(open, os.Stdout), "rpcservice", log.Ldate|log.Ltime)
+		glog.Log = log.New(io.MultiWriter(open, os.Stdout), "LOG", log.Ldate|log.Ltime)
 		glog.Openfile = open
 	}
 	return glog.Log

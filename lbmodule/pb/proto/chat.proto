@@ -13,15 +13,10 @@ message ChatMessage{
   int64 tuid = 6;
   string msg  = 7;
 }
-message ChatMsgRequest {
+message ChatRequest {
   ChatMessage msg = 1;
 }
-
 // The response message containing the greetings
-message ChatMsgReply {
+message ChatReply {
   int32  result  = 1;
-}
-
-message ChatMsgPush{
-  ChatMessage msg = 1;
 }

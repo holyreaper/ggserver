@@ -5,21 +5,9 @@ package message;
 import "chat.proto";
 import "user.proto";
 message Message{
-    int32           command   =   1;
-    int64           uid       =   2;
-    ChatMsgRequest chatRequest  = 3;
-    
-    ChatMsgReply    chatReply  = 4;
-    
-    LoginMsgRequest loginRequest = 5;
-    
-    LoginMsgReply   loginReply  = 6;
-    
-    LogOutMsgRequest logoutRequest = 7;
-
-    LogOutMsgReply  logoutReply = 8;
-
-    //服务器推送消息
-    ChatMsgPush     chatmsgPush = 10001;
-
+    uint32          command                     =   1;
+    int64           uid                         =   2;
+    int64           requestid                   =   3;
+    LoginRequest    loginReq                    =   4;
+    LoginReply      loginReply                  =   5;
 }

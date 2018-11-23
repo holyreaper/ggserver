@@ -1,6 +1,7 @@
 package lbnet
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -20,148 +21,154 @@ import (
 /* ----------------------------------------------------------------
 	服务器处理客户端的连接
 ---------------------------------------------------------------- */
-//LBNet net
-type LBNet struct {
-	listen       *net.TCPListener
-	exitCh       chan bool
-	waitGroup    *sync.WaitGroup
-	readTimeOut  time.Duration
-	writeTimeOut time.Duration
-	oc           sync.Once
+//BoolChan 简单的chan包装
+type BoolChan struct {
+	exitChan chan bool
+	one      sync.Once
+}
+
+//NewBoolChan new chan
+func NewBoolChan(len int32) *BoolChan {
+	return &BoolChan{
+		exitChan: make(chan bool, len),
+		one:      sync.Once{},
+	}
+}
+
+//Close 退出
+func (bc *BoolChan) Close() {
+	bc.one.Do(func() {
+		close(bc.exitChan)
+	})
+}
+
+//GetChan .
+func (bc *BoolChan) GetChan() chan bool {
+	return bc.exitChan
+}
+
+//CheckChan 是否关闭
+type CheckChan interface {
+	CheckChan() bool
+}
+
+//Address addr
+type Address interface {
+	Addr() string
 }
 
 //Sender 发送者
 type Sender interface {
-	Send(packet.Packet) error
+	HandleSend(CheckChan) error
 }
 
 //Receiver 接收
 type Receiver interface {
-	Receive() (packet.Packet, error)
+	HandleReceive(CheckChan) error
 }
 
-//ClientCnn 客户端的连接
-type ClientCnn struct {
+//Packger 打包
+type Packger interface {
+	HandlePacket(CheckChan) error
+}
+
+//Connection 客户端连接服务器
+type Connection struct {
 	//接收缓冲区
 	receivePacket chan packet.Packet
 	//待发送缓冲
 	sendPacket chan packet.Packet
 	//标记
-	exitCh chan bool
+	exitCh *BoolChan
 	//地址
 	addr string
 	//cnn
 	cnn *net.TCPConn
-	//one
-	one sync.Once
-}
-
-//Send send data
-func (client *ClientCnn) Send(pack packet.Packet) error {
-	client.sendPacket <- pack
-	defer func() {
-		if err := recover(); err != nil {
-			LogFatal("client send %s fail err %s", client.addr, err)
-		}
-	}()
-	return nil
 }
 
 //HandlePacket .
-func (client *ClientCnn) HandlePacket(exitCh chan bool) {
-	var uid int64
+func (client *Connection) HandlePacket(chch CheckChan) (err error) {
 	fmt.Println("HandlePacket ing ...")
 	for {
+		if !client.CheckChan() {
+			err = errors.New("handlePacket exit")
+			goto END
+		}
+		if !chch.CheckChan() {
+			err = errors.New("handlePacket exit")
+			goto END
+		}
 		select {
-		case <-client.exitCh:
-			fmt.Printf("Stop HandlePacket \r\n")
-			return
-		case <-exitCh:
-			fmt.Println("Stop Handle Send Packet exit flag ")
-			return
 		case p := <-client.receivePacket:
 			{
-				var err error
 				var ret []reflect.Value
 				var lmsg message.Message
 				err = proto.Unmarshal(p.Data, &lmsg)
 				if err != nil {
-					fmt.Println("message unmarshal fail ", err)
-					continue
+					LogFatal("message unmarshal fail ", err)
+					goto NEXT
 				}
-				if p.Type == packet.PKGLogin {
-					ret, err = funcall.Call(p.Type, lmsg)
-					uid = lmsg.Uid
-				} else {
-					if uid <= 0 {
-						//illegal method
-						LogFatal("net have an illegal request disconnect %s", client.GetAddr())
-						p.Clear()
-						lmsg.LogoutReply.Result = "illegal request disconnect !!"
-						p.Pack(packet.PkLogOut, &lmsg)
-						//client.sendPacket <- p
-						client.Send(p)
-						time.Sleep(1)
-						exitCh <- true
-						return
-					}
-					lmsg.Uid = uid
-					ret, err = funcall.Call(p.Type, lmsg)
+				if lmsg.GetUid() <= 0 && lmsg.GetCommand() != uint32(funcall.FCUserModule+1) { //注册
+					LogFatal("net client connection illegal user ")
+					err = errors.New("net client connection illegal user")
+					goto END
 				}
-				if err != nil {
-					fmt.Printf("func call type  %d error %s \r\n", p.Type, err)
-					continue
-				}
+				ret, err = funcall.Call(p.Type, lmsg)
 				for _, value := range ret {
-					v := value.Interface()
+					_ = value.Interface()
 					//tmppack[index] = v.(packet.Packet)
 					//spack <- tmppack[index]
-					tmp := v.(message.Message)
-					tmppack := packet.Packet{}
-					tmppack.Pack(tmp.Command, &tmp)
+					//tmp := v.(message.Message)
+					//tmppack := packet.Packet{}
+					//tmppack.Pack(tmp.Command, &tmp)
 				}
 			}
 		}
-
+	NEXT:
 	}
+END:
+	return err
 }
 
 //HandleSend .
-func (client *ClientCnn) HandleSend(exitCh chan bool) {
+func (client *Connection) HandleSend(chch CheckChan) (err error) {
+
 	for {
+		if !client.CheckChan() {
+			err = errors.New("handle send exit")
+			goto END
+		}
+		if !chch.CheckChan() {
+			err = errors.New("handle send exit")
+			goto END
+		}
 		select {
-		case <-client.exitCh:
-			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
-			return
-		case <-exitCh:
-			fmt.Println("Stop Handle Send Packet exit flag ")
-			return
 		case p := <-client.sendPacket:
 			fmt.Printf("send packeting ... %d len %d ", p.Type, p.Len)
 			buff := p.FormatBuf()
 			currSend := 0
 			for {
+				client.SetWriteDeadline(time.Now().Add(MaxReadWriteTime * time.Second))
 				ln, err := client.cnn.Write(buff[currSend:])
-				if err != nil && ln != len(buff[currSend:]) {
-					if def.IsTimeOut(err) {
-						currSend += ln
-						continue
-					} else {
-						fmt.Println("send byte to client  err ", err)
-						return
+				if err != nil {
+					if !def.IsTimeOut(err) && !def.IsFdBlock(err) {
+						fmt.Println("send byte to client  err  ", err.Error())
+						return errors.New("handleSendt exit")
 					}
 				}
-				if currSend+ln >= len(buff) {
+				currSend += ln
+				if currSend >= len(buff) {
 					break
 				}
 			}
 		}
-
 	}
+END:
+	return err
 }
 
 //HandleReceive .
-func (client *ClientCnn) HandleReceive(exitCh chan bool) {
+func (client *Connection) HandleReceive(chch CheckChan) (err error) {
 	var (
 		pLen    = make([]byte, 4)
 		pType   = make([]byte, 4)
@@ -174,57 +181,58 @@ func (client *ClientCnn) HandleReceive(exitCh chan bool) {
 
 	)
 	for {
-		select {
-		case <-exitCh:
+		if !chch.CheckChan() {
 			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
-			return
-		case <-client.exitCh:
-			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
-			return
-		default:
+			err = errors.New("exit chan ")
+			goto END
 		}
-		client.SetReadDeadline(time.Now().Add(30 * time.Second))
+		if !client.CheckChan() {
+			fmt.Printf("Stop Handle Send Packet exit ch \r\n")
+			goto END
+		}
+
 		if cLen < 4 {
-			if n, err := io.ReadFull(client.cnn, pLen[cLen:]); err != nil && n != 4 {
-				if def.IsTimeOut(err) {
+			client.SetReadDeadline(time.Now().Add(MaxReadWriteTime * time.Second))
+			if n, err := io.ReadFull(client.cnn, pLen[cLen:]); n < 4 {
+				if def.IsTimeOut(err) || def.IsFdBlock(err) {
 					cLen += n
-					fmt.Printf("Read pLen time out  \r\n")
+					fmt.Printf("Read pLen time out or block \r\n")
 					continue
 				}
-				fmt.Printf("Read pLen failed: %v\r\n", err)
-				return //exit
+				fmt.Printf("Read pLen failed: %s\r\n", err.Error())
+				err = errors.New("exit chan ")
+				goto END
 			}
 			cLen += 4
 			if pPacLen = convert.BytesToInt32(pLen); pPacLen > packet.MAXPACKETLEN {
 				fmt.Printf("pacLen larger than pPacLen\r\n")
-				return
+				err = errors.New("exit chan ")
+				goto END
 			}
 		}
 		if cType < 4 {
-			if n, err := io.ReadFull(client.cnn, pType); err != nil && n != 4 {
-				if err == io.EOF {
-					LogInfo("net ioread fail cnn %s hase been closed!! ", client.cnn.RemoteAddr().String())
-				} else if def.IsTimeOut(err) {
+			client.SetReadDeadline(time.Now().Add(MaxReadWriteTime * time.Second))
+			if n, err := io.ReadFull(client.cnn, pType); n < 4 {
+				if def.IsTimeOut(err) || def.IsFdBlock(err) {
 					cType += n
-					fmt.Printf("Read pType time out  \r\n")
+					fmt.Printf("Read pType time out or block \r\n")
 					continue
 				}
-				fmt.Printf("Read pType failed: %v\r\n", err)
-				return
+				err = errors.New("exit chan ")
+				goto END
 			}
 			cType += 4
 		}
 		if cPacLen < pPacLen {
+			client.SetReadDeadline(time.Now().Add(MaxReadWriteTime * time.Second))
 			if n, err := io.ReadFull(client.cnn, pacData[cPacLen:pPacLen-8]); err != nil && n != int(pPacLen-8-cPacLen) {
-				if err == io.EOF {
-					LogInfo("net ioread fail cnn %s hase been closed!! ", client.cnn.RemoteAddr().String())
-				} else if def.IsTimeOut(err) {
-					cPacLen += int32(n)
-					fmt.Printf("Read pacData time out  \r\n")
+				if def.IsTimeOut(err) || def.IsFdBlock(err) {
+					cType += n
+					fmt.Printf("Read pacData time out or block \r\n")
 					continue
 				}
-				fmt.Printf("Read pacData failed: %v\r\n", err)
-				return
+				err = errors.New("exit chan ")
+				goto END
 			}
 			cPacLen += pPacLen
 		}
@@ -239,23 +247,38 @@ func (client *ClientCnn) HandleReceive(exitCh chan bool) {
 		cType = 0
 		cPacLen = 0
 	}
+END:
+	return err
 }
 
 //Close close
-func (client *ClientCnn) Close() {
-	client.one.Do(func() {
-		close(client.exitCh)
-	})
+func (client *Connection) Close() {
+	client.exitCh.Close()
 }
 
-//GetAddr addr
-func (client *ClientCnn) GetAddr() string {
+//Addr addr
+func (client *Connection) Addr() string {
 	return client.addr
 }
 
 //SetReadDeadline 阻塞时间
-func (client *ClientCnn) SetReadDeadline(t time.Time) error {
+func (client *Connection) SetReadDeadline(t time.Time) error {
 	return client.cnn.SetReadDeadline(t)
+}
+
+//SetWriteDeadline 阻塞时间
+func (client *Connection) SetWriteDeadline(t time.Time) error {
+	return client.cnn.SetWriteDeadline(t)
+}
+
+//CheckChan 检查chan是否可用
+func (client *Connection) CheckChan() bool {
+	select {
+	case <-client.exitCh.GetChan():
+		return true
+	default:
+	}
+	return false
 }
 
 const (
@@ -264,13 +287,30 @@ const (
 	//MaxRead .
 	MaxRead int32 = 100
 	//MaxReadWriteTime 超时时间
-	MaxReadWriteTime int32 = 10
+	MaxReadWriteTime time.Duration = 10
 )
 
+//Server ,
+type Server interface {
+	Start()
+	Stop()
+	Init(ipaddr string) (err error)
+}
+
+//TCPServer net
+type TCPServer struct {
+	listen       *net.TCPListener
+	exitCh       *BoolChan
+	waitGroup    *sync.WaitGroup
+	readTimeOut  time.Duration
+	writeTimeOut time.Duration
+	oc           sync.Once
+}
+
 //NewLBNet new lbnet
-func NewLBNet() *LBNet {
-	return &LBNet{
-		exitCh:       make(chan bool),
+func NewLBNet() *TCPServer {
+	return &TCPServer{
+		exitCh:       NewBoolChan(0),
 		listen:       &net.TCPListener{},
 		waitGroup:    &sync.WaitGroup{},
 		readTimeOut:  time.Duration(30),
@@ -279,7 +319,7 @@ func NewLBNet() *LBNet {
 }
 
 // Start deal cnn
-func (lbnet *LBNet) Start() {
+func (lbnet *TCPServer) Start() {
 	LogInfo("lbnet start ...")
 	defer func() {
 		if err := recover(); err != nil {
@@ -289,10 +329,8 @@ func (lbnet *LBNet) Start() {
 		lbnet.Stop()
 	}()
 	for {
-		select {
-		case <-lbnet.exitCh:
-			break
-		default:
+		if !lbnet.CheckChan() {
+			goto END
 		}
 		lbnet.listen.SetDeadline(time.Now().Add(lbnet.readTimeOut * time.Second))
 		cnn, err := lbnet.listen.AcceptTCP()
@@ -303,31 +341,37 @@ func (lbnet *LBNet) Start() {
 				lbnet.Stop()
 			}
 		}
-
 		cnn.SetKeepAlivePeriod(10)
 		cnn.SetKeepAlive(true)
 		LogInfo("have a Cnn accept start to serve it  ")
 		go lbnet.HandleCnn(cnn)
 	}
-
+END:
 }
 
 // Stop deal cnn
-func (lbnet *LBNet) Stop() {
-	lbnet.oc.Do(func() {
-		close(lbnet.exitCh)
-		lbnet.waitGroup.Wait()
-	})
+func (lbnet *TCPServer) Stop() {
+	lbnet.exitCh.Close()
+}
+
+//CheckChan 检查chan是否可用
+func (lbnet *TCPServer) CheckChan() bool {
+	select {
+	case <-lbnet.exitCh.GetChan():
+		return false
+	default:
+	}
+	return true
 }
 
 // Init deal cnn
-func (lbnet *LBNet) Init(nettype string /*tcp*/, ipaddr string) (err error) {
-	tcpAddr, err := net.ResolveTCPAddr(nettype, ipaddr)
+func (lbnet *TCPServer) Init(ipaddr string) (err error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", ipaddr)
 	if err != nil {
 		LogFatal("lbserver ResolveTCPAddr  addr %s error %s   ", ipaddr, err)
 		return
 	}
-	lbnet.listen, err = net.ListenTCP(nettype, tcpAddr)
+	lbnet.listen, err = net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		LogFatal("lbserver Listen error %s", err)
 		return
@@ -336,15 +380,14 @@ func (lbnet *LBNet) Init(nettype string /*tcp*/, ipaddr string) (err error) {
 }
 
 //HandleCnn handle cnn
-func (lbnet *LBNet) HandleCnn(tpcCnn *net.TCPConn) {
+func (lbnet *TCPServer) HandleCnn(tpcCnn *net.TCPConn) {
 	lbnet.waitGroup.Add(1)
-	client := &ClientCnn{
+	client := &Connection{
 		receivePacket: make(chan packet.Packet, MaxRead),
 		sendPacket:    make(chan packet.Packet, MaxSend),
-		exitCh:        make(chan bool),
+		exitCh:        NewBoolChan(0),
 		addr:          tpcCnn.RemoteAddr().String(),
 		cnn:           tpcCnn,
-		one:           sync.Once{},
 	}
 	defer func() {
 		defer func() {
@@ -362,13 +405,7 @@ func (lbnet *LBNet) HandleCnn(tpcCnn *net.TCPConn) {
 }
 
 //HandleReceive handle receive
-func (lbnet *LBNet) HandleReceive(client *ClientCnn) {
-	LogInfo("start service for  the new client  %s", client.GetAddr())
-
-}
-
-//HandlePacket handle packet
-func (lbnet *LBNet) HandlePacket(client *ClientCnn) {
+func (lbnet *TCPServer) HandleReceive(receiver Receiver) {
 	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
@@ -376,11 +413,23 @@ func (lbnet *LBNet) HandlePacket(client *ClientCnn) {
 		}
 		lbnet.waitGroup.Done()
 	}()
-	client.HandlePacket(lbnet.exitCh)
+	receiver.HandleReceive(lbnet)
+}
+
+//HandlePacket handle packet
+func (lbnet *TCPServer) HandlePacket(packger Packger) {
+	lbnet.waitGroup.Add(1)
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("handle deal packet panic error %v \r\n", err)
+		}
+		lbnet.waitGroup.Done()
+	}()
+	packger.HandlePacket(lbnet)
 }
 
 //HandleSend handle send packet...
-func (lbnet *LBNet) HandleSend(client *ClientCnn) {
+func (lbnet *TCPServer) HandleSend(sender Sender) {
 	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
@@ -388,5 +437,5 @@ func (lbnet *LBNet) HandleSend(client *ClientCnn) {
 		}
 		lbnet.waitGroup.Done()
 	}()
-	client.HandleSend(lbnet.exitCh)
+	sender.HandleSend(lbnet)
 }

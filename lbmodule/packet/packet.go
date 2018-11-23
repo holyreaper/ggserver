@@ -19,26 +19,8 @@ type Packet struct {
 }
 
 const (
-	//PKUnKnown 初始
-	PKUnKnown = iota
-	//PKGHeartBeat 心跳
-	PKGHeartBeat
-
-	//PKGLogin 登录
-	PKGLogin
-
-	//PkLogOut 登出
-	PkLogOut
-
-	//PKGChat 聊天
-	PKGChat
-	//PKGChatPush 聊天推送
-	PKGChatPush
-)
-
-const (
 	//MAXPACKETLEN 包体最大长度
-	MAXPACKETLEN = 4096 + 8
+	MAXPACKETLEN = 40960 + 8
 	//DEFAULTPACKLEN 默认包长度
 	DEFAULTPACKLEN = 32
 )
@@ -82,7 +64,7 @@ func (pk *Packet) GetType() int32 {
 
 //Clear clear data
 func (pk *Packet) Clear() {
-	pk.Type = PKUnKnown
+	pk.Type = 0
 	pk.Data = make([]byte, 0)
 	pk.Len = 0
 }

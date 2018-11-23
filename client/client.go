@@ -12,7 +12,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/holyreaper/ggserver/lbmodule/pb/message"
-	"github.com/holyreaper/ggserver/rpcservice/pb/chat"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

@@ -13,16 +13,16 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 // login request
-type LoginMsgRequest struct {
+type LoginRequest struct {
 	Uid int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
 }
 
-func (m *LoginMsgRequest) Reset()                    { *m = LoginMsgRequest{} }
-func (m *LoginMsgRequest) String() string            { return proto.CompactTextString(m) }
-func (*LoginMsgRequest) ProtoMessage()               {}
-func (*LoginMsgRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
+func (m *LoginRequest) Reset()                    { *m = LoginRequest{} }
+func (m *LoginRequest) String() string            { return proto.CompactTextString(m) }
+func (*LoginRequest) ProtoMessage()               {}
+func (*LoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
 
-func (m *LoginMsgRequest) GetUid() int64 {
+func (m *LoginRequest) GetUid() int64 {
 	if m != nil {
 		return m.Uid
 	}
@@ -30,33 +30,41 @@ func (m *LoginMsgRequest) GetUid() int64 {
 }
 
 // login reply
-type LoginMsgReply struct {
-	Result int32 `protobuf:"varint,1,opt,name=result" json:"result,omitempty"`
+type LoginReply struct {
+	Result    int32 `protobuf:"varint,1,opt,name=result" json:"result,omitempty"`
+	Timestamp int64 `protobuf:"varint,2,opt,name=timestamp" json:"timestamp,omitempty"`
 }
 
-func (m *LoginMsgReply) Reset()                    { *m = LoginMsgReply{} }
-func (m *LoginMsgReply) String() string            { return proto.CompactTextString(m) }
-func (*LoginMsgReply) ProtoMessage()               {}
-func (*LoginMsgReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
+func (m *LoginReply) Reset()                    { *m = LoginReply{} }
+func (m *LoginReply) String() string            { return proto.CompactTextString(m) }
+func (*LoginReply) ProtoMessage()               {}
+func (*LoginReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
 
-func (m *LoginMsgReply) GetResult() int32 {
+func (m *LoginReply) GetResult() int32 {
 	if m != nil {
 		return m.Result
 	}
 	return 0
 }
 
+func (m *LoginReply) GetTimestamp() int64 {
+	if m != nil {
+		return m.Timestamp
+	}
+	return 0
+}
+
 // logout request
-type LogOutMsgRequest struct {
+type LogOutRequest struct {
 	Uid int64 `protobuf:"varint,1,opt,name=uid" json:"uid,omitempty"`
 }
 
-func (m *LogOutMsgRequest) Reset()                    { *m = LogOutMsgRequest{} }
-func (m *LogOutMsgRequest) String() string            { return proto.CompactTextString(m) }
-func (*LogOutMsgRequest) ProtoMessage()               {}
-func (*LogOutMsgRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{2} }
+func (m *LogOutRequest) Reset()                    { *m = LogOutRequest{} }
+func (m *LogOutRequest) String() string            { return proto.CompactTextString(m) }
+func (*LogOutRequest) ProtoMessage()               {}
+func (*LogOutRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{2} }
 
-func (m *LogOutMsgRequest) GetUid() int64 {
+func (m *LogOutRequest) GetUid() int64 {
 	if m != nil {
 		return m.Uid
 	}
@@ -64,40 +72,144 @@ func (m *LogOutMsgRequest) GetUid() int64 {
 }
 
 // logout reply
-type LogOutMsgReply struct {
+type LogOutReply struct {
 	Result string `protobuf:"bytes,1,opt,name=result" json:"result,omitempty"`
 }
 
-func (m *LogOutMsgReply) Reset()                    { *m = LogOutMsgReply{} }
-func (m *LogOutMsgReply) String() string            { return proto.CompactTextString(m) }
-func (*LogOutMsgReply) ProtoMessage()               {}
-func (*LogOutMsgReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{3} }
+func (m *LogOutReply) Reset()                    { *m = LogOutReply{} }
+func (m *LogOutReply) String() string            { return proto.CompactTextString(m) }
+func (*LogOutReply) ProtoMessage()               {}
+func (*LogOutReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{3} }
 
-func (m *LogOutMsgReply) GetResult() string {
+func (m *LogOutReply) GetResult() string {
 	if m != nil {
 		return m.Result
 	}
 	return ""
 }
 
+// register request
+type RegisterRequest struct {
+	Uname    string `protobuf:"bytes,1,opt,name=uname" json:"uname,omitempty"`
+	Email    string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
+	Password string `protobuf:"bytes,3,opt,name=password" json:"password,omitempty"`
+	Gender   int32  `protobuf:"varint,4,opt,name=gender" json:"gender,omitempty"`
+}
+
+func (m *RegisterRequest) Reset()                    { *m = RegisterRequest{} }
+func (m *RegisterRequest) String() string            { return proto.CompactTextString(m) }
+func (*RegisterRequest) ProtoMessage()               {}
+func (*RegisterRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{4} }
+
+func (m *RegisterRequest) GetUname() string {
+	if m != nil {
+		return m.Uname
+	}
+	return ""
+}
+
+func (m *RegisterRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+func (m *RegisterRequest) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+func (m *RegisterRequest) GetGender() int32 {
+	if m != nil {
+		return m.Gender
+	}
+	return 0
+}
+
+// register reply
+type RegisterReply struct {
+	Uname string `protobuf:"bytes,1,opt,name=uname" json:"uname,omitempty"`
+	Ret   int32  `protobuf:"varint,2,opt,name=ret" json:"ret,omitempty"`
+}
+
+func (m *RegisterReply) Reset()                    { *m = RegisterReply{} }
+func (m *RegisterReply) String() string            { return proto.CompactTextString(m) }
+func (*RegisterReply) ProtoMessage()               {}
+func (*RegisterReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{5} }
+
+func (m *RegisterReply) GetUname() string {
+	if m != nil {
+		return m.Uname
+	}
+	return ""
+}
+
+func (m *RegisterReply) GetRet() int32 {
+	if m != nil {
+		return m.Ret
+	}
+	return 0
+}
+
+// keepAlive request
+type KeepAliveRequest struct {
+	Msg string `protobuf:"bytes,1,opt,name=msg" json:"msg,omitempty"`
+}
+
+func (m *KeepAliveRequest) Reset()                    { *m = KeepAliveRequest{} }
+func (m *KeepAliveRequest) String() string            { return proto.CompactTextString(m) }
+func (*KeepAliveRequest) ProtoMessage()               {}
+func (*KeepAliveRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{6} }
+
+func (m *KeepAliveRequest) GetMsg() string {
+	if m != nil {
+		return m.Msg
+	}
+	return ""
+}
+
+// register reply
+type KeepAliveReply struct {
+}
+
+func (m *KeepAliveReply) Reset()                    { *m = KeepAliveReply{} }
+func (m *KeepAliveReply) String() string            { return proto.CompactTextString(m) }
+func (*KeepAliveReply) ProtoMessage()               {}
+func (*KeepAliveReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{7} }
+
 func init() {
-	proto.RegisterType((*LoginMsgRequest)(nil), "message.LoginMsgRequest")
-	proto.RegisterType((*LoginMsgReply)(nil), "message.LoginMsgReply")
-	proto.RegisterType((*LogOutMsgRequest)(nil), "message.LogOutMsgRequest")
-	proto.RegisterType((*LogOutMsgReply)(nil), "message.LogOutMsgReply")
+	proto.RegisterType((*LoginRequest)(nil), "message.LoginRequest")
+	proto.RegisterType((*LoginReply)(nil), "message.LoginReply")
+	proto.RegisterType((*LogOutRequest)(nil), "message.LogOutRequest")
+	proto.RegisterType((*LogOutReply)(nil), "message.LogOutReply")
+	proto.RegisterType((*RegisterRequest)(nil), "message.RegisterRequest")
+	proto.RegisterType((*RegisterReply)(nil), "message.RegisterReply")
+	proto.RegisterType((*KeepAliveRequest)(nil), "message.KeepAliveRequest")
+	proto.RegisterType((*KeepAliveReply)(nil), "message.KeepAliveReply")
 }
 
 func init() { proto.RegisterFile("user.proto", fileDescriptor2) }
 
 var fileDescriptor2 = []byte{
-	// 133 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0x2d, 0x4e, 0x2d,
-	0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xcf, 0x4d, 0x2d, 0x2e, 0x4e, 0x4c, 0x4f, 0x55,
-	0x52, 0xe6, 0xe2, 0xf7, 0xc9, 0x4f, 0xcf, 0xcc, 0xf3, 0x2d, 0x4e, 0x0f, 0x4a, 0x2d, 0x2c, 0x4d,
-	0x2d, 0x2e, 0x11, 0x12, 0xe0, 0x62, 0x2e, 0xcd, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0x60, 0x0e,
-	0x02, 0x31, 0x95, 0xd4, 0xb9, 0x78, 0x11, 0x8a, 0x0a, 0x72, 0x2a, 0x85, 0xc4, 0xb8, 0xd8, 0x8a,
-	0x52, 0x8b, 0x4b, 0x73, 0x4a, 0xc0, 0xaa, 0x58, 0x83, 0xa0, 0x3c, 0x25, 0x15, 0x2e, 0x01, 0x9f,
-	0xfc, 0x74, 0xff, 0xd2, 0x12, 0xbc, 0xc6, 0x69, 0x70, 0xf1, 0x21, 0xa9, 0xc2, 0x34, 0x8f, 0x13,
-	0x66, 0x5e, 0x12, 0x1b, 0xd8, 0xb5, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xce, 0xa3, 0x8d,
-	0x31, 0xbb, 0x00, 0x00, 0x00,
+	// 257 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x41, 0x4b, 0xfc, 0x30,
+	0x10, 0xc5, 0xd9, 0x7f, 0xff, 0x5d, 0xed, 0xe8, 0x6a, 0x09, 0x22, 0x45, 0x3c, 0xac, 0x41, 0xc1,
+	0x93, 0x17, 0x0f, 0x9e, 0xf5, 0xea, 0x82, 0x90, 0x6f, 0x10, 0xe9, 0x10, 0x02, 0x49, 0x93, 0xcd,
+	0x24, 0xca, 0x7e, 0x7b, 0x49, 0xda, 0xba, 0x0b, 0xea, 0xed, 0xbd, 0xc9, 0x9b, 0xfc, 0x66, 0x18,
+	0x80, 0x44, 0x18, 0x1e, 0x7c, 0x70, 0xd1, 0xb1, 0x23, 0x8b, 0x44, 0x52, 0x21, 0x5f, 0xc3, 0xe9,
+	0xc6, 0x29, 0x3d, 0x08, 0xdc, 0x26, 0xa4, 0xc8, 0x5a, 0xa8, 0x92, 0xee, 0xbb, 0xc5, 0x7a, 0x71,
+	0x5f, 0x89, 0x2c, 0xf9, 0x0b, 0xc0, 0x94, 0xf0, 0x66, 0xc7, 0x2e, 0x61, 0x19, 0x90, 0x92, 0x89,
+	0x25, 0x52, 0x8b, 0xc9, 0xb1, 0x6b, 0x68, 0xa2, 0xb6, 0x48, 0x51, 0x5a, 0xdf, 0xfd, 0x2b, 0xdd,
+	0xfb, 0x02, 0xbf, 0x81, 0xd5, 0xc6, 0xa9, 0xb7, 0x14, 0xff, 0xc6, 0xdc, 0xc1, 0xc9, 0x1c, 0xf9,
+	0xc9, 0x69, 0x66, 0x0e, 0xdf, 0xc2, 0xb9, 0x40, 0xa5, 0x29, 0x62, 0x98, 0xff, 0xba, 0x80, 0x3a,
+	0x0d, 0xd2, 0xe2, 0x94, 0x1c, 0x4d, 0xae, 0xa2, 0x95, 0xda, 0x94, 0x61, 0x1a, 0x31, 0x1a, 0x76,
+	0x05, 0xc7, 0x5e, 0x12, 0x7d, 0xba, 0xd0, 0x77, 0x55, 0x79, 0xf8, 0xf6, 0x19, 0xa9, 0x70, 0xe8,
+	0x31, 0x74, 0xff, 0xc7, 0xd5, 0x46, 0xc7, 0x9f, 0x60, 0xb5, 0x47, 0xe6, 0xd9, 0x7e, 0x07, 0xb6,
+	0x50, 0x05, 0x8c, 0x05, 0x57, 0x8b, 0x2c, 0xf9, 0x2d, 0xb4, 0xaf, 0x88, 0xfe, 0xd9, 0xe8, 0x0f,
+	0x3c, 0x58, 0xdc, 0x92, 0x9a, 0x3a, 0xb3, 0xe4, 0x2d, 0x9c, 0x1d, 0xa4, 0xbc, 0xd9, 0xbd, 0x2f,
+	0xcb, 0x8d, 0x1e, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x48, 0x63, 0xb8, 0x75, 0xb1, 0x01, 0x00,
+	0x00,
 }

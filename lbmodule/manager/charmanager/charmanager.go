@@ -47,7 +47,7 @@ var (
 type OnLineMng struct {
 	manager map[UID]*CharManager
 	wrLock  *sync.RWMutex
-}
+} 
 
 //AddUser 增加user
 func (cm *OnLineMng) AddUser(rpack chan<- packet.Packet, spack chan<- packet.Packet, exitCh chan bool, uid UID) bool {
