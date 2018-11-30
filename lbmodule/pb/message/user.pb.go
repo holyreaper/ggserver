@@ -20,7 +20,7 @@ type LoginRequest struct {
 func (m *LoginRequest) Reset()                    { *m = LoginRequest{} }
 func (m *LoginRequest) String() string            { return proto.CompactTextString(m) }
 func (*LoginRequest) ProtoMessage()               {}
-func (*LoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
+func (*LoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
 
 func (m *LoginRequest) GetUid() int64 {
 	if m != nil {
@@ -38,7 +38,7 @@ type LoginReply struct {
 func (m *LoginReply) Reset()                    { *m = LoginReply{} }
 func (m *LoginReply) String() string            { return proto.CompactTextString(m) }
 func (*LoginReply) ProtoMessage()               {}
-func (*LoginReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
+func (*LoginReply) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
 
 func (m *LoginReply) GetResult() int32 {
 	if m != nil {
@@ -62,7 +62,7 @@ type LogOutRequest struct {
 func (m *LogOutRequest) Reset()                    { *m = LogOutRequest{} }
 func (m *LogOutRequest) String() string            { return proto.CompactTextString(m) }
 func (*LogOutRequest) ProtoMessage()               {}
-func (*LogOutRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{2} }
+func (*LogOutRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
 
 func (m *LogOutRequest) GetUid() int64 {
 	if m != nil {
@@ -79,7 +79,7 @@ type LogOutReply struct {
 func (m *LogOutReply) Reset()                    { *m = LogOutReply{} }
 func (m *LogOutReply) String() string            { return proto.CompactTextString(m) }
 func (*LogOutReply) ProtoMessage()               {}
-func (*LogOutReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{3} }
+func (*LogOutReply) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{3} }
 
 func (m *LogOutReply) GetResult() string {
 	if m != nil {
@@ -99,7 +99,7 @@ type RegisterRequest struct {
 func (m *RegisterRequest) Reset()                    { *m = RegisterRequest{} }
 func (m *RegisterRequest) String() string            { return proto.CompactTextString(m) }
 func (*RegisterRequest) ProtoMessage()               {}
-func (*RegisterRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{4} }
+func (*RegisterRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{4} }
 
 func (m *RegisterRequest) GetUname() string {
 	if m != nil {
@@ -138,7 +138,7 @@ type RegisterReply struct {
 func (m *RegisterReply) Reset()                    { *m = RegisterReply{} }
 func (m *RegisterReply) String() string            { return proto.CompactTextString(m) }
 func (*RegisterReply) ProtoMessage()               {}
-func (*RegisterReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{5} }
+func (*RegisterReply) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{5} }
 
 func (m *RegisterReply) GetUname() string {
 	if m != nil {
@@ -162,7 +162,7 @@ type KeepAliveRequest struct {
 func (m *KeepAliveRequest) Reset()                    { *m = KeepAliveRequest{} }
 func (m *KeepAliveRequest) String() string            { return proto.CompactTextString(m) }
 func (*KeepAliveRequest) ProtoMessage()               {}
-func (*KeepAliveRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{6} }
+func (*KeepAliveRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{6} }
 
 func (m *KeepAliveRequest) GetMsg() string {
 	if m != nil {
@@ -178,7 +178,7 @@ type KeepAliveReply struct {
 func (m *KeepAliveReply) Reset()                    { *m = KeepAliveReply{} }
 func (m *KeepAliveReply) String() string            { return proto.CompactTextString(m) }
 func (*KeepAliveReply) ProtoMessage()               {}
-func (*KeepAliveReply) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{7} }
+func (*KeepAliveReply) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{7} }
 
 func init() {
 	proto.RegisterType((*LoginRequest)(nil), "message.LoginRequest")
@@ -191,9 +191,9 @@ func init() {
 	proto.RegisterType((*KeepAliveReply)(nil), "message.KeepAliveReply")
 }
 
-func init() { proto.RegisterFile("user.proto", fileDescriptor2) }
+func init() { proto.RegisterFile("user.proto", fileDescriptor3) }
 
-var fileDescriptor2 = []byte{
+var fileDescriptor3 = []byte{
 	// 257 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x41, 0x4b, 0xfc, 0x30,
 	0x10, 0xc5, 0xd9, 0x7f, 0xff, 0x5d, 0xed, 0xe8, 0x6a, 0x09, 0x22, 0x45, 0x3c, 0xac, 0x41, 0xc1,

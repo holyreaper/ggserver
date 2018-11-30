@@ -3,6 +3,8 @@ package packet
 import (
 	"fmt"
 
+	"github.com/holyreaper/ggserver/lbmodule/funcall"
+
 	proto "github.com/golang/protobuf/proto"
 	"github.com/holyreaper/ggserver/util/convert"
 )
@@ -14,7 +16,7 @@ import (
  */
 type Packet struct {
 	Len  int32
-	Type int32
+	Type funcall.FuncCallEnum
 	Data []byte
 }
 
@@ -26,7 +28,7 @@ const (
 )
 
 //Pack 打包
-func (pk *Packet) Pack(tp int32, data proto.Message) error {
+func (pk *Packet) Pack(tp funcall.FuncCallEnum, data proto.Message) error {
 
 	dt, err := proto.Marshal(data)
 	if err != nil {
@@ -58,7 +60,7 @@ func (pk *Packet) FormatBuf() (buf []byte) {
 }
 
 //GetType 获取类型
-func (pk *Packet) GetType() int32 {
+func (pk *Packet) GetType() funcall.FuncCallEnum {
 	return pk.Type
 }
 

@@ -6,7 +6,11 @@ import (
 	"net"
 	"time"
 
+	"github.com/holyreaper/ggserver/lbmodule/funcall"
+	"github.com/holyreaper/ggserver/lbmodule/packet"
+
 	. "github.com/holyreaper/ggserver/glog"
+	"github.com/holyreaper/ggserver/lbmodule/pb/message"
 )
 
 /* ----------------------------------------------------------------
@@ -40,24 +44,36 @@ func (client *TCPClient) Cnn() error {
 	}
 	return nil
 }
+func (client *TCPClient) sendKeepAlivePacket() {
+	pack := packet.Packet{}
+	pack.Pack(funcall.FCHeartBeat, &message.Message{KeepAliveRequest: &message.KeepAliveRequest{Msg: "helo"}})
+	client.sendPacket <- pack
+}
 
 //GoKeepAlive keepalive
 func (client *TCPClient) GoKeepAlive() {
+	defer func() {
+		if err := recover(); err != nil {
+			LogFatal("client %s keepAlive exit %v", client.addr, err)
+		}
+	}()
 	var i = 0
 	for {
 		time.AfterFunc(1*time.Second, func() {
 			i++
 			if i >= 30 {
-				//send keepAlive 包
+				client.sendKeepAlivePacket()
+				i = 0
 			}
 		})
 		select {
 		case <-client.exitCh.GetChan():
 			LogInfo("net client keepalive exit")
-			return
+			goto END
 		default:
 		}
 	}
+END:
 }
 
 //Close .
@@ -67,6 +83,17 @@ func (client *TCPClient) Close() {
 		client.cnn = nil
 	}
 	client.exitCh.Close()
+}
+
+//Send .
+func (client *ProxyClient) Send(pack packet.Packet) (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+
+		}
+	}()
+	client.sendPacket <- pack
+	return
 }
 
 //KeepAlive keep
@@ -113,4 +140,9 @@ func (client *ProxyClient) HandlePacket(chch CheckChan) (err error) {
 	}
 END:
 	return err
+}
+func (client *ProxyClient) sendKeepAlivePacket() {
+	pack := packet.Packet{}
+	pack.Pack(funcall.FCHeartBeat, &message.SSmessage{Id: client.getID(), Message: &message.Message{KeepAliveRequest: &message.KeepAliveRequest{Msg: "helo"}}})
+	client.sendPacket <- pack
 }

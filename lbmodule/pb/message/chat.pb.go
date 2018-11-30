@@ -7,6 +7,7 @@ Package message is a generated protocol buffer package.
 It is generated from these files:
 	chat.proto
 	message.proto
+	ssmessage.proto
 	user.proto
 
 It has these top-level messages:
@@ -14,6 +15,7 @@ It has these top-level messages:
 	ChatRequest
 	ChatReply
 	Message
+	SSmessage
 	LoginRequest
 	LoginReply
 	LogOutRequest

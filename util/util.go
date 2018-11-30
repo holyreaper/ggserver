@@ -8,45 +8,46 @@ import (
 	. "github.com/holyreaper/ggserver/glog"
 )
 
-//MaxOffset .
-const MaxOffset = 16777215
+//IDGenerator .
+type IDGenerator struct {
+	maxOffset uint32
+	offset    uint32
+	lastTime  uint32
+	mutex     sync.Mutex
+}
 
-var offset int32
-var lastTime int32
-var mutex sync.Mutex
-
-//GenerateID 根据当前id生成一个全服唯一的id
-func GenerateID() (id int64) {
+//GenerateID 生成一个全服唯一的id
+func (idg *IDGenerator) GenerateID() (id uint64) {
 	defer func() {
-		mutex.Unlock()
+		idg.mutex.Unlock()
 	}()
-	mutex.Lock()
-	now := int32(time.Now().Unix())
-	if now != lastTime {
-		offset = 0
+	idg.mutex.Lock()
+	now := uint32(time.Now().Unix())
+	if now != idg.lastTime {
+		idg.offset = 0
 	}
-	if MaxOffset <= offset {
-		LogFatal("util::GenerateID %d have got max offset ", MaxOffset)
+	if idg.maxOffset <= idg.offset {
+		LogInfo("util::GenerateID %d have got max offset ", idg.maxOffset)
 		time.Sleep(time.Second)
 	}
-
+	idg.offset++
 	serverid := int32(common.GetServerID())
 	//先搞时间
-	id += int64(now >> 24)
-	id <<= 8
-	id += int64(now >> 16)
-	id <<= 8
-	id += int64(now >> 8)
-	id <<= 8
-	id += int64(byte(now))
+	id += uint64(now)
+	id <<= 32
 	//服务器id
-	id <<= 8
-	id += int64(serverid >> 8)
-	id <<= 8
-	id += int64(byte(serverid))
+	id += uint64(serverid & 0x0000ffff)
+	id <<= 16
 	//顺序
-	id <<= 8
-	id = id + int64(offset) + 1
-
+	id = id + uint64(idg.offset) + 1
 	return
+}
+
+//NewIDGenerator .
+func NewIDGenerator() *IDGenerator {
+	return &IDGenerator{
+		maxOffset: 65535,
+		offset:    0,
+		lastTime:  0,
+	}
 }

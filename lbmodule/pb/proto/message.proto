@@ -5,9 +5,15 @@ package message;
 import "chat.proto";
 import "user.proto";
 message Message{
-    uint32          command                     =   1;
-    int64           uid                         =   2;
-    int64           requestid                   =   3;
-    LoginRequest    loginReq                    =   4;
-    LoginReply      loginReply                  =   5;
+    uint32              command                     =   1;
+    int64               uid                         =   2;
+    int64               requestid                   =   3;
+    LoginRequest        loginReq                    =   4;
+    LoginReply          loginReply                  =   5;
+    KeepAliveRequest    keepAliveRequest            =   6;
+    RegisterRequest     registerRequest             =   7;
+    RegisterReply       registerReply               =   8;
+    ChatRequest         chatRequest                 =   9;
+    ChatReply           chatReply                   =   10;
+
 }

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+//server <-> server proto
+package message;
+
+import "message.proto";
+message SSmessage{
+    uint64        id                =   1;
+    Message       message           =   2;
+}

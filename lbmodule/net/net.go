@@ -15,6 +15,7 @@ import (
 	"github.com/holyreaper/ggserver/lbmodule/funcall"
 	"github.com/holyreaper/ggserver/lbmodule/packet"
 	"github.com/holyreaper/ggserver/lbmodule/pb/message"
+	"github.com/holyreaper/ggserver/util"
 	"github.com/holyreaper/ggserver/util/convert"
 )
 
@@ -57,18 +58,18 @@ type Address interface {
 	Addr() string
 }
 
-//Sender 发送者
-type Sender interface {
+//HandleSender 发送者
+type HandleSender interface {
 	HandleSend(CheckChan) error
 }
 
-//Receiver 接收
-type Receiver interface {
+//HandleReceiver 接收
+type HandleReceiver interface {
 	HandleReceive(CheckChan) error
 }
 
-//Packger 打包
-type Packger interface {
+//HandlePackger 打包
+type HandlePackger interface {
 	HandlePacket(CheckChan) error
 }
 
@@ -84,6 +85,34 @@ type Connection struct {
 	addr string
 	//cnn
 	cnn *net.TCPConn
+	//连接id
+	id uint64
+}
+
+//包处理 逻辑
+func (client *Connection) dealPacket(p packet.Packet) (err error) {
+	var ret []reflect.Value
+	var lmsg message.Message
+	err = proto.Unmarshal(p.Data, &lmsg)
+	if err != nil {
+		LogFatal("message unmarshal fail ", err)
+		return
+	}
+	if lmsg.GetUid() <= 0 && lmsg.GetCommand() != uint32(funcall.FCUserModule+1) { //注册
+		LogFatal("net client connection illegal user ")
+		err = errors.New("net client connection illegal user")
+		return
+	}
+	ret, err = funcall.Call(p.Type, lmsg)
+	for _, value := range ret {
+		_ = value.Interface()
+		//tmppack[index] = v.(packet.Packet)
+		//spack <- tmppack[index]
+		//tmp := v.(message.Message)
+		//tmppack := packet.Packet{}
+		//tmppack.Pack(tmp.Command, &tmp)
+	}
+	return nil
 }
 
 //HandlePacket .
@@ -101,30 +130,12 @@ func (client *Connection) HandlePacket(chch CheckChan) (err error) {
 		select {
 		case p := <-client.receivePacket:
 			{
-				var ret []reflect.Value
-				var lmsg message.Message
-				err = proto.Unmarshal(p.Data, &lmsg)
+				err = client.dealPacket(p)
 				if err != nil {
-					LogFatal("message unmarshal fail ", err)
-					goto NEXT
-				}
-				if lmsg.GetUid() <= 0 && lmsg.GetCommand() != uint32(funcall.FCUserModule+1) { //注册
-					LogFatal("net client connection illegal user ")
-					err = errors.New("net client connection illegal user")
 					goto END
-				}
-				ret, err = funcall.Call(p.Type, lmsg)
-				for _, value := range ret {
-					_ = value.Interface()
-					//tmppack[index] = v.(packet.Packet)
-					//spack <- tmppack[index]
-					//tmp := v.(message.Message)
-					//tmppack := packet.Packet{}
-					//tmppack.Pack(tmp.Command, &tmp)
 				}
 			}
 		}
-	NEXT:
 	}
 END:
 	return err
@@ -240,7 +251,7 @@ func (client *Connection) HandleReceive(chch CheckChan) (err error) {
 		fmt.Println("HandleCnn get full packet data   ...")
 		client.receivePacket <- packet.Packet{
 			Len:  pPacLen,
-			Type: convert.BytesToInt32(pType),
+			Type: funcall.FuncCallEnum(convert.BytesToInt32(pType)),
 			Data: pacData[:pPacLen-8],
 		}
 		cLen = 0
@@ -249,6 +260,12 @@ func (client *Connection) HandleReceive(chch CheckChan) (err error) {
 	}
 END:
 	return err
+}
+func (client *Connection) getID() uint64 {
+	return client.id
+}
+func (client *Connection) setID(id uint64) {
+	client.id = id
 }
 
 //Close close
@@ -305,6 +322,8 @@ type TCPServer struct {
 	readTimeOut  time.Duration
 	writeTimeOut time.Duration
 	oc           sync.Once
+	cnnMap       map[uint64]*Connection
+	idGenerator  *util.IDGenerator
 }
 
 //NewLBNet new lbnet
@@ -315,6 +334,8 @@ func NewLBNet() *TCPServer {
 		waitGroup:    &sync.WaitGroup{},
 		readTimeOut:  time.Duration(30),
 		writeTimeOut: time.Duration(30),
+		cnnMap:       make(map[uint64]*Connection, 10000),
+		idGenerator:  util.NewIDGenerator(),
 	}
 }
 
@@ -341,8 +362,6 @@ func (lbnet *TCPServer) Start() {
 				lbnet.Stop()
 			}
 		}
-		cnn.SetKeepAlivePeriod(10)
-		cnn.SetKeepAlive(true)
 		LogInfo("have a Cnn accept start to serve it  ")
 		go lbnet.HandleCnn(cnn)
 	}
@@ -379,6 +398,10 @@ func (lbnet *TCPServer) Init(ipaddr string) (err error) {
 	return nil
 }
 
+func (lbnet *TCPServer) addCnn(client *Connection) {
+	lbnet.cnnMap[client.getID()] = client
+}
+
 //HandleCnn handle cnn
 func (lbnet *TCPServer) HandleCnn(tpcCnn *net.TCPConn) {
 	lbnet.waitGroup.Add(1)
@@ -388,24 +411,40 @@ func (lbnet *TCPServer) HandleCnn(tpcCnn *net.TCPConn) {
 		exitCh:        NewBoolChan(0),
 		addr:          tpcCnn.RemoteAddr().String(),
 		cnn:           tpcCnn,
+		id:            0,
 	}
-	defer func() {
-		defer func() {
-			if e := recover(); e != nil {
-				fmt.Println("cnn panic  from addr ", tpcCnn.RemoteAddr().String())
-			}
-		}()
-		client.Close()
-		tpcCnn.Close()
-		lbnet.waitGroup.Done()
-	}()
+	defer lbnet.disConnect(client)
 	go lbnet.HandleSend(client)
 	go lbnet.HandleReceive(client)
 	go lbnet.HandlePacket(client)
+	select {
+	case <-client.exitCh.GetChan():
+	}
+	lbnet.waitGroup.Done()
+}
+
+//disConnect .
+func (lbnet *TCPServer) disConnect(client *Connection) {
+	if client == nil {
+		return
+	}
+	if e := recover(); e != nil {
+		fmt.Println("cnn panic  from addr ", client.Addr())
+	}
+	if client.getID() <= 0 {
+		return
+	}
+	if _, ok := lbnet.cnnMap[client.getID()]; ok {
+		delete(lbnet.cnnMap, client.getID())
+	} else {
+		LogFatal("cannot find index %d", client.getID())
+	}
+	client.Close()
+	client = nil
 }
 
 //HandleReceive handle receive
-func (lbnet *TCPServer) HandleReceive(receiver Receiver) {
+func (lbnet *TCPServer) HandleReceive(receiver HandleReceiver) {
 	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
@@ -417,7 +456,7 @@ func (lbnet *TCPServer) HandleReceive(receiver Receiver) {
 }
 
 //HandlePacket handle packet
-func (lbnet *TCPServer) HandlePacket(packger Packger) {
+func (lbnet *TCPServer) HandlePacket(packger HandlePackger) {
 	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
@@ -429,7 +468,7 @@ func (lbnet *TCPServer) HandlePacket(packger Packger) {
 }
 
 //HandleSend handle send packet...
-func (lbnet *TCPServer) HandleSend(sender Sender) {
+func (lbnet *TCPServer) HandleSend(sender HandleSender) {
 	lbnet.waitGroup.Add(1)
 	defer func() {
 		if err := recover(); err != nil {
@@ -438,4 +477,15 @@ func (lbnet *TCPServer) HandleSend(sender Sender) {
 		lbnet.waitGroup.Done()
 	}()
 	sender.HandleSend(lbnet)
+}
+
+//ProxyServer .
+type ProxyServer struct {
+	TCPServer
+}
+
+//加入连接
+func (lbnet *ProxyServer) addCnn(client *Connection) {
+	client.setID(lbnet.idGenerator.GenerateID())
+	lbnet.cnnMap[client.getID()] = client
 }
