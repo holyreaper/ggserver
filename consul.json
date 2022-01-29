@@ -7,7 +7,7 @@
           "lobby server  lb0001"
         ],
         "address": "192.168.52.160",
-        "port": 8090,
+        "port": 8091,
         "checks": [
         ]
       },
